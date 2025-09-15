@@ -132,11 +132,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/h5p/{h5pContent}/retry', [H5PController::class, 'retryProcessing'])->name('h5p.retry');
     
     Route::post('/lessons/reorder', [LessonController::class, 'reorder'])->name('lessons.reorder');
-    Route::get('/admin/h5p/available', [LessonController::class, 'getAvailableH5P'])->name('admin.h5p.available');
+    Route::get('/h5p/available-for-lessons', [LessonController::class, 'getAvailableH5P'])->name('admin.h5p.available');
     
-    // Lesson analytics routes
-    Route::get('/admin/courses/{course}/lessons/{lesson}/analytics', [LessonController::class, 'analytics'])->name('admin.lessons.analytics');
-    Route::get('/admin/courses/{course}/lessons/{lesson}/analytics/export', [LessonController::class, 'exportAnalytics'])->name('admin.lessons.analytics.export');
+    // Lesson analytics routes (within admin group)
+    Route::get('/courses/{course}/lessons/{lesson}/analytics', [LessonController::class, 'analytics'])->name('admin.lessons.analytics');
+    Route::get('/courses/{course}/lessons/{lesson}/analytics/export', [LessonController::class, 'exportAnalytics'])->name('admin.lessons.analytics.export');
     
     // Category management (admin only)
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

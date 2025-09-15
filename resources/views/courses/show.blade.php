@@ -38,13 +38,13 @@
                         </div>
                         <span class="text-white/90 text-sm">By Unknown Instructor</span>
                     </div>
-                    @endif
-
+                        @endif
+                        
                     <!-- Course Title -->
                     <h1 class="text-white text-3xl lg:text-4xl font-bold leading-tight mb-4">
-                        {{ $course->title }}
-                    </h1>
-
+                                {{ $course->title }}
+                            </h1>
+                            
                     <!-- Course Description -->
                     <p class="text-white/90 text-lg leading-relaxed mb-6">
                         @if($course->short_description)
@@ -68,17 +68,17 @@
                             <i class="fas fa-signal text-white"></i>
                             <span class="text-white font-medium">{{ ucfirst($course->level) }}</span>
                         </div>
-                        @if($totalReviews > 0)
+                                @if($totalReviews > 0)
                         <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 flex items-center gap-2">
                             <div class="flex text-yellow-300">
-                                @for($i = 1; $i <= 5; $i++)
-                                    @if($i <= round($averageRating))
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= round($averageRating))
                                         <i class="fas fa-star text-xs"></i>
-                                    @else
+                                        @else
                                         <i class="far fa-star text-xs"></i>
-                                    @endif
-                                @endfor
-                            </div>
+                                        @endif
+                                    @endfor
+                                </div>
                             <span class="text-white font-medium">{{ number_format($averageRating, 1) }} ({{ $totalReviews }})</span>
                         </div>
                         @endif
@@ -92,12 +92,12 @@
                             @else
                                 ${{ number_format($course->price, 2) }}
                             @endif
-                        </span>
+                                </span>
                         @if(!$course->is_free && $course->original_price && $course->original_price > $course->price)
                         <span class="text-white/60 line-through ml-2">${{ number_format($course->original_price, 2) }}</span>
-                        @endif
-                    </div>
-
+                                @endif
+                            </div>
+                            
                     <!-- Tags -->
                     <div class="flex flex-wrap gap-3">
                         <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white/15 border border-white/25 text-white">
@@ -138,9 +138,9 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+                            </div>
+                        </div>
+                    </div>
 
     <!-- Main Content -->
     <div class="bg-white">
@@ -166,9 +166,9 @@
                                         <i class="fab fa-youtube text-red-500"></i>
                                         <span>HD Quality</span>
                                     </div>
-                                </div>
-                            </div>
-                            
+                                        </div>
+                                    </div>
+                                    
                             <!-- Video Player -->
                             <div class="relative bg-black w-full" style="height: 400px; min-height: 400px;">
                                 <iframe 
@@ -197,11 +197,11 @@
                                         <i class="fas fa-eye"></i>
                                         <span>{{ number_format($course->enrollments->count() * 12) }} views</span>
                                     </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    @else
+                        @else
                     <!-- Course Thumbnail if no video -->
                     @if($course->thumbnail)
                     <div class="bg-gray-100 rounded-lg overflow-hidden mb-8">
@@ -311,8 +311,8 @@
                                 </li>
                                 @endforeach
                             </ul>
-                            @endif
-                        </div>
+                        @endif
+                    </div>
 
                         <!-- Author Section -->
                         @if($course->instructor)
@@ -327,14 +327,14 @@
                                     <p class="text-gray-600 text-sm">Developer and Bootcamp Instructor</p>
                                     <div class="flex items-center space-x-2 mt-2">
                                         <div class="flex text-yellow-400">
-                                            @for($i = 1; $i <= 5; $i++)
+                                        @for($i = 1; $i <= 5; $i++)
                                                 <span class="text-sm"></span>
-                                            @endfor
-                                        </div>
+                                        @endfor
+                                    </div>
                                         <span class="text-gray-600 text-sm">(4.8)</span>
                                     </div>
                                 </div>
-                            </div>
+                                </div>
                         </div>
                         @endif
                     </div>
@@ -382,9 +382,9 @@
                                         </div>
                                     </div>
                                     <p class="text-gray-700">{{ $review->comment }}</p>
-                                </div>
-                                @endforeach
                             </div>
+                            @endforeach
+                        </div>
                         @else
                             <p class="text-gray-600">No reviews yet. Be the first to review this course!</p>
                         @endif
@@ -422,7 +422,7 @@
                                     <div>
                                         <div class="font-medium text-gray-900">{{ $chapterName }}: {{ $lessons->first()->title ?? 'Getting Started' }}</div>
                                         <div class="text-sm text-gray-600">{{ $lessons->count() }} | {{ $lessons->count() * 5 }}min</div>
-                                    </div>
+                                </div>
                                     <svg id="chapter-{{ $loop->index }}-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
                                     </svg>
@@ -430,48 +430,74 @@
                                 <div id="chapter-{{ $loop->index }}" class="hidden p-3">
                                     @foreach($lessons->take(5) as $lesson)
                                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3 last:mb-0 hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <i class="fas fa-play text-teal-600"></i>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="font-medium text-gray-900 text-sm">{{ $lesson->title }}</div>
-                                                <div class="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                                                    <span class="flex items-center gap-1">
-                                                        <i class="fas fa-clock"></i>
-                                                        {{ $lesson->duration ?? '6' }}min
-                                                    </span>
-                                                    <span class="flex items-center gap-1">
-                                                        <i class="fas fa-eye"></i>
-                                                        Preview
-                                                    </span>
+                                        <a href="{{ route('lessons.show', [$course, $lesson]) }}" class="block">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    @if($lesson->is_free)
+                                                        <i class="fas fa-play text-teal-600"></i>
+                                                    @elseif(auth()->user() && $course->hasAccess(auth()->user()))
+                                                        <i class="fas fa-play text-teal-600"></i>
+                                @else
+                                                        <i class="fas fa-lock text-gray-400"></i>
+                                @endif
+                                                </div>
+                                                <div class="flex-1">
+                                                    <div class="font-medium text-gray-900 text-sm hover:text-teal-600 transition-colors">{{ $lesson->title }}</div>
+                                                    <div class="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                                                        <span class="flex items-center gap-1">
+                                                            <i class="fas fa-clock"></i>
+                                                            {{ $lesson->duration_minutes ?? '6' }}min
+                                                        </span>
+                                                        @if($lesson->is_free)
+                                                            <span class="flex items-center gap-1 text-green-600">
+                                                                <i class="fas fa-eye"></i>
+                                                                Free Preview
+                                                            </span>
+                                                        @elseif(auth()->user() && $lesson->hasAccess(auth()->user()))
+                                                            <span class="flex items-center gap-1 text-blue-600">
+                                                                <i class="fas fa-play-circle"></i>
+                                                                Available
+                                                            </span>
+                            @else
+                                                            <span class="flex items-center gap-1 text-gray-500">
+                                                                <i class="fas fa-lock"></i>
+                                                                Locked
+                                                            </span>
+                                @endif
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    @auth
+                                                        @if($lesson->isCompletedByUser(auth()->user()))
+                                                            <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                                                        @elseif($lesson->getProgressForUser(auth()->user()))
+                                                            <i class="fas fa-clock text-yellow-500 text-lg"></i>
+                            @endif
+                            @endauth
                                                 </div>
                                             </div>
-                                            <div class="flex items-center gap-2">
-                                                <input type="checkbox" class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
-                                            </div>
-                                        </div>
+                                        </a>
                                     </div>
                                     @endforeach
                                 </div>
                             </div>
                             @endforeach
                         </div>
-                    </div>
+                        </div>
 
                     <!-- Requirements -->
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6 hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-2 mb-4">
                             <i class="fas fa-clipboard-list text-blue-600"></i>
                             <h3 class="font-bold text-gray-900 text-lg">Requirements</h3>
-                        </div>
+                                </div>
                         <div class="space-y-3">
                             <div class="flex items-start space-x-2">
                                 <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                                 </svg>
                                 <span class="text-gray-700 text-sm">Access to a computer with an internet connection</span>
-                            </div>
+                                </div>
                             @if($course->prerequisites && count($course->prerequisites) > 0)
                                 @foreach($course->prerequisites as $prerequisite)
                                 <div class="flex items-start space-x-2">
@@ -481,7 +507,7 @@
                                     <span class="text-gray-700 text-sm">{{ $prerequisite }}</span>
                                 </div>
                                 @endforeach
-                            @endif
+                                @endif
                         </div>
                     </div>
 
@@ -511,7 +537,7 @@
                             <div class="flex items-center gap-4">
                                 <i class="fas fa-closed-captioning text-indigo-500"></i>
                                 <span class="text-gray-700 font-medium">Closed captions</span>
-                            </div>
+                                </div>
                             <div class="flex items-center gap-4">
                                 <i class="fas fa-certificate text-yellow-500"></i>
                                 <span class="text-gray-700 font-medium">Certificate of completion</span>
@@ -553,7 +579,7 @@
             if (chapter.classList.contains('hidden')) {
                 chapter.classList.remove('hidden');
                 icon.classList.add('rotate-180');
-            } else {
+                    } else {
                 chapter.classList.add('hidden');
                 icon.classList.remove('rotate-180');
             }

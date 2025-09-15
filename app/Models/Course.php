@@ -176,7 +176,7 @@ class Course extends Model
         }
 
         // Admin has access to everything
-        if ($user->role === 'admin') {
+        if ($user->hasRole('admin')) {
             return true;
         }
 
