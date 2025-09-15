@@ -192,6 +192,11 @@
                                                     </a>
                                                 @endif
                                                 
+                                                <a href="{{ route('admin.h5p.edit', $content) }}"
+                                                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                                    ✏️ Edit
+                                                </a>
+                                                
                                                 <button onclick="copyEmbedCode('{{ $content->id }}')"
                                                         class="text-gray-600 hover:text-gray-800 text-sm font-medium">
                                                     📋 Copy ID

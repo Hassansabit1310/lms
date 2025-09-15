@@ -96,6 +96,36 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- H5P Content Library -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">H5P Content</p>
+                            <p class="text-3xl font-bold text-slate-800">{{ number_format($stats['total_h5p_content'] ?? 0) }}</p>
+                            <p class="text-sm text-pink-600">Interactive content pieces</p>
+                        </div>
+                        <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-puzzle-piece text-pink-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Lessons -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">Total Lessons</p>
+                            <p class="text-3xl font-bold text-slate-800">{{ number_format($stats['total_lessons'] ?? 0) }}</p>
+                            <p class="text-sm text-indigo-600">Across all courses</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Management Panels -->
@@ -138,6 +168,20 @@
                                 </svg>
                             </div>
                             <span class="font-medium text-green-700">Manage Users</span>
+                        </a>
+
+                        <a href="{{ route('admin.h5p.index') }}" class="flex items-center p-3 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors">
+                            <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-puzzle-piece text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium text-pink-700">H5P Content Library</span>
+                        </a>
+
+                        <a href="{{ route('admin.h5p.create') }}" class="flex items-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+                            <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-upload text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium text-orange-700">Upload H5P Content</span>
                         </a>
 
                         <a href="{{ route('admin.reports.revenue') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">

@@ -282,6 +282,42 @@ class H5PController extends Controller
     }
 
     /**
+     * Show H5P content edit form
+     */
+    public function edit(H5PContent $h5pContent): View
+    {
+        // Authorization handled by role:admin middleware
+        
+        $h5pContent->load(['usages.lessonContent.lesson.course']);
+        
+        return view('admin.h5p.edit', compact('h5pContent'));
+    }
+
+    /**
+     * Update H5P content
+     */
+    public function update(Request $request, H5PContent $h5pContent): RedirectResponse
+    {
+        // Authorization handled by role:admin middleware
+        
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $h5pContent->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()
+            ->route('admin.h5p.index')
+            ->with('success', 'H5P content updated successfully!');
+    }
+
+    /**
      * Delete H5P content
      */
     public function destroy(H5PContent $h5pContent): RedirectResponse

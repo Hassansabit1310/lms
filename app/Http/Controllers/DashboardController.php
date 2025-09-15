@@ -7,6 +7,8 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Subscription;
 use App\Models\Payment;
+use App\Models\H5PContent;
+use App\Models\Lesson;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -52,6 +54,8 @@ class DashboardController extends Controller
             'total_courses' => Course::count(),
             'total_enrollments' => Enrollment::count(),
             'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
+            'total_h5p_content' => H5PContent::count(),
+            'total_lessons' => Lesson::count(),
             'new_users_this_month' => User::whereMonth('created_at', now()->month)->count(),
             'new_enrollments_this_month' => Enrollment::whereMonth('created_at', now()->month)->count(),
         ];

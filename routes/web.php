@@ -127,6 +127,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/h5p', [H5PController::class, 'index'])->name('h5p.index');
     Route::get('/h5p/create', [H5PController::class, 'create'])->name('h5p.create');
     Route::post('/h5p', [H5PController::class, 'store'])->name('h5p.store');
+    Route::get('/h5p/{h5pContent}/edit', [H5PController::class, 'edit'])->name('h5p.edit');
+    Route::patch('/h5p/{h5pContent}', [H5PController::class, 'update'])->name('h5p.update');
     Route::delete('/h5p/{h5pContent}', [H5PController::class, 'destroy'])->name('h5p.destroy');
     Route::get('/h5p/available', [H5PController::class, 'getAvailableContent'])->name('h5p.available');
     Route::post('/h5p/{h5pContent}/retry', [H5PController::class, 'retryProcessing'])->name('h5p.retry');
