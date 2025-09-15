@@ -229,11 +229,4 @@ class H5PContent extends Model
         return round($bytes, 2) . ' ' . $units[$i];
     }
 
-    /**
-     * Get embed URL
-     */
-    public function getEmbedUrl(): string
-    {
-        return route('h5p.embed', $this);
-    }
 }

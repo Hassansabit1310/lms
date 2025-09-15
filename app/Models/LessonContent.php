@@ -56,6 +56,14 @@ class LessonContent extends Model
     }
 
     /**
+     * Get the H5P content associated with this lesson content
+     */
+    public function h5pContent(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\H5PContent::class, 'h5p_content_id');
+    }
+
+    /**
      * Scope for active content
      */
     public function scopeActive($query)
@@ -125,9 +133,47 @@ class LessonContent extends Model
     private function renderH5PContent(): string
     {
         if ($this->h5p_content_id) {
-            return '<div class="h5p-content" data-h5p-id="' . $this->h5p_content_id . '">Loading H5P content...</div>';
+            $h5pContent = $this->h5pContent ?? \App\Models\H5PContent::find($this->h5p_content_id);
+            
+            if ($h5pContent && $h5pContent->isReady()) {
+                return '<div class="h5p-content-wrapper bg-white border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="h5p-header bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-medium text-gray-900">' . htmlspecialchars($h5pContent->title) . '</h4>
+                                    <span class="text-xs text-gray-500 bg-green-100 px-2 py-1 rounded">Interactive Content</span>
+                                </div>
+                            </div>
+                            <div class="h5p-content-frame" style="min-height: 400px;">
+                                <iframe src="' . route('h5p.embed', $h5pContent) . '" 
+                                        width="100%" 
+                                        height="500" 
+                                        frameborder="0" 
+                                        allowfullscreen
+                                        style="border: none;">
+                                </iframe>
+                            </div>
+                        </div>';
+            } else {
+                return '<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">H5P Content Not Available</h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <p>The H5P content for this lesson is not ready or has been removed.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>';
+            }
         }
-        return '<p class="text-gray-600">H5P content not available</p>';
+        
+        return '<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <i class="fas fa-puzzle-piece text-gray-400 text-3xl mb-3"></i>
+                    <p class="text-gray-600">No H5P content configured for this section</p>
+                </div>';
     }
 
     /**

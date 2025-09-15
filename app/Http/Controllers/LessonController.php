@@ -214,7 +214,7 @@ class LessonController extends Controller
         }
 
         // Load lesson with related data
-        $lesson->load(['contents', 'quizzes.questions', 'progress']);
+        $lesson->load(['contents.h5pContent', 'quizzes.questions', 'progress']);
         
         // Get user's progress for this lesson
         $userProgress = $user ? $lesson->getProgressForUser($user) : null;
