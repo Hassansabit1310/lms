@@ -57,7 +57,7 @@ class ContentLock extends Model
         }
 
         // Admin bypass
-        if ($user->isAdmin()) {
+        if ($user->hasRole('admin')) {
             return false;
         }
 
@@ -73,6 +73,35 @@ class ContentLock extends Model
 
         // Check condition-based unlock
         return !$this->checkUnlockConditions($user);
+    }
+
+    /**
+     * Check if content is unlocked for a specific user (opposite of isLockedFor)
+     */
+    public function isUnlockedFor(User $user): bool
+    {
+        return !$this->isLockedFor($user);
+    }
+
+    /**
+     * Get human-readable description of the lock
+     */
+    public function getDescription(): string
+    {
+        if ($this->reason) {
+            return $this->reason;
+        }
+
+        return match ($this->unlock_condition) {
+            'manual' => 'Content locked until manually unlocked by instructor',
+            'time_based' => $this->unlocks_at 
+                ? "Content unlocks on {$this->unlocks_at->format('M j, Y g:i A')}"
+                : 'Content locked until specified time',
+            'task_completion' => 'Complete required tasks to unlock this content',
+            'payment' => 'Purchase required to unlock this content',
+            'subscription' => 'Active subscription required to unlock this content',
+            default => 'Content is currently locked',
+        };
     }
 
     /**

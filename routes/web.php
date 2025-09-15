@@ -58,7 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Lesson viewing
     Route::get('/courses/{course}/lessons/{lesson}', [LessonController::class, 'show'])->name('lessons.show');
     Route::post('/courses/{course}/lessons/{lesson}/progress', [LessonController::class, 'updateProgress'])->name('lessons.progress');
-    Route::post('/courses/{course}/lessons/{lesson}/complete', [LessonController::class, 'markComplete'])->name('lessons.complete');
+    Route::post('/courses/{course}/lessons/{lesson}/complete', [LessonController::class, 'markCompleted'])->name('lessons.complete');
+    
+    // Quiz functionality within lessons
+    Route::get('/courses/{course}/lessons/{lesson}/quiz/{quiz}', [LessonController::class, 'showQuiz'])->name('lessons.quiz.show');
+    Route::post('/courses/{course}/lessons/{lesson}/quiz/{quiz}/submit', [LessonController::class, 'submitQuiz'])->name('lessons.quiz.submit');
     
     // Payment routes
     Route::get('/courses/{course}/checkout', [PaymentController::class, 'checkout'])->name('courses.checkout');
@@ -128,6 +132,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/h5p/{h5pContent}/retry', [H5PController::class, 'retryProcessing'])->name('h5p.retry');
     
     Route::post('/lessons/reorder', [LessonController::class, 'reorder'])->name('lessons.reorder');
+    Route::get('/admin/h5p/available', [LessonController::class, 'getAvailableH5P'])->name('admin.h5p.available');
+    
+    // Lesson analytics routes
+    Route::get('/admin/courses/{course}/lessons/{lesson}/analytics', [LessonController::class, 'analytics'])->name('admin.lessons.analytics');
+    Route::get('/admin/courses/{course}/lessons/{lesson}/analytics/export', [LessonController::class, 'exportAnalytics'])->name('admin.lessons.analytics.export');
     
     // Category management (admin only)
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

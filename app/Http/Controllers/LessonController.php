@@ -333,4 +333,330 @@ class LessonController extends Controller
             ->route('lessons.show', [$course, $lesson])
             ->with('success', 'Lesson marked as completed!');
     }
+
+    /**
+     * Update lesson progress (AJAX endpoint)
+     */
+    public function updateProgress(Request $request, Course $course, Lesson $lesson)
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$lesson->hasAccess($user)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $validated = $request->validate([
+            'progress_percentage' => 'required|integer|min:0|max:100',
+            'time_spent' => 'nullable|integer|min:0',
+        ]);
+
+        $status = $validated['progress_percentage'] >= 100 ? 'completed' : 'in_progress';
+        $completedAt = $status === 'completed' ? now() : null;
+
+        $progress = Progress::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'lesson_id' => $lesson->id,
+            ],
+            [
+                'status' => $status,
+                'progress_percentage' => $validated['progress_percentage'],
+                'time_spent' => ($validated['time_spent'] ?? 0),
+                'completed_at' => $completedAt,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'progress' => $progress,
+            'message' => $status === 'completed' ? 'Lesson completed!' : 'Progress updated!'
+        ]);
+    }
+
+    /**
+     * Reorder lessons (AJAX endpoint for drag & drop)
+     */
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'course_id' => 'required|exists:courses,id',
+            'lesson_orders' => 'required|array',
+            'lesson_orders.*.id' => 'required|exists:lessons,id',
+            'lesson_orders.*.order' => 'required|integer|min:1',
+        ]);
+
+        $course = Course::findOrFail($validated['course_id']);
+        
+        // Check authorization
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('admin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Update lesson orders
+        foreach ($validated['lesson_orders'] as $lessonData) {
+            Lesson::where('id', $lessonData['id'])
+                  ->where('course_id', $course->id)
+                  ->update(['order' => $lessonData['order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lesson order updated successfully!'
+        ]);
+    }
+
+    /**
+     * Get available H5P content for lesson creation (AJAX)
+     */
+    public function getAvailableH5P()
+    {
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('admin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $h5pContents = \App\Models\H5PContent::where('upload_status', 'completed')
+            ->select('id', 'title', 'content_type', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'h5p_contents' => $h5pContents
+        ]);
+    }
+
+    /**
+     * Show quiz for lesson (AJAX)
+     */
+    public function showQuiz(Course $course, Lesson $lesson, \App\Models\Quiz $quiz)
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$lesson->hasAccess($user)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $quiz->load(['questions' => function($query) {
+            $query->where('is_active', true)->orderBy('order');
+        }]);
+
+        return response()->json([
+            'success' => true,
+            'quiz' => $quiz,
+            'questions' => $quiz->questions
+        ]);
+    }
+
+    /**
+     * Submit quiz answers (AJAX)
+     */
+    public function submitQuiz(Request $request, Course $course, Lesson $lesson, \App\Models\Quiz $quiz)
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$lesson->hasAccess($user)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $validated = $request->validate([
+            'answers' => 'required|array',
+            'time_spent' => 'nullable|integer|min:0',
+        ]);
+
+        // Create quiz attempt
+        $attempt = \App\Models\QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+            'answers' => $validated['answers'],
+            'time_spent' => $validated['time_spent'] ?? 0,
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        // Calculate score
+        $totalQuestions = $quiz->questions->where('is_active', true)->count();
+        $correctAnswers = 0;
+        $totalPoints = 0;
+        $earnedPoints = 0;
+
+        foreach ($quiz->questions->where('is_active', true) as $question) {
+            $userAnswer = $validated['answers'][$question->id] ?? null;
+            $points = $question->calculatePoints($userAnswer);
+            
+            $totalPoints += $question->points;
+            $earnedPoints += $points;
+            
+            if ($points > 0) {
+                $correctAnswers++;
+            }
+        }
+
+        $scorePercentage = $totalPoints > 0 ? ($earnedPoints / $totalPoints) * 100 : 0;
+
+        // Update attempt with score
+        $attempt->update([
+            'score_percentage' => $scorePercentage,
+            'points_earned' => $earnedPoints,
+            'points_total' => $totalPoints,
+        ]);
+
+        // Update lesson progress if quiz passed
+        if ($scorePercentage >= ($quiz->passing_score ?? 70)) {
+            Progress::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'lesson_id' => $lesson->id,
+                ],
+                [
+                    'status' => 'completed',
+                    'progress_percentage' => 100,
+                    'completed_at' => now(),
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'attempt' => $attempt,
+            'score_percentage' => $scorePercentage,
+            'passed' => $scorePercentage >= ($quiz->passing_score ?? 70),
+            'correct_answers' => $correctAnswers,
+            'total_questions' => $totalQuestions,
+        ]);
+    }
+
+    /**
+     * Get lesson analytics and statistics (Admin only)
+     */
+    public function analytics(Course $course, Lesson $lesson)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('admin')) {
+            abort(403);
+        }
+
+        // Basic statistics
+        $totalStudents = $course->enrollments()->count();
+        $studentsStarted = Progress::where('lesson_id', $lesson->id)->distinct('user_id')->count();
+        $studentsCompleted = Progress::where('lesson_id', $lesson->id)
+            ->where('status', 'completed')
+            ->distinct('user_id')
+            ->count();
+
+        // Completion rate
+        $completionRate = $totalStudents > 0 ? ($studentsCompleted / $totalStudents) * 100 : 0;
+        $startRate = $totalStudents > 0 ? ($studentsStarted / $totalStudents) * 100 : 0;
+
+        // Average time spent
+        $avgTimeSpent = Progress::where('lesson_id', $lesson->id)
+            ->where('time_spent', '>', 0)
+            ->avg('time_spent') ?? 0;
+
+        // Recent activity
+        $recentProgress = Progress::where('lesson_id', $lesson->id)
+            ->with('user:id,name,email')
+            ->orderBy('updated_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Progress distribution
+        $progressDistribution = Progress::where('lesson_id', $lesson->id)
+            ->selectRaw('
+                COUNT(CASE WHEN progress_percentage = 0 THEN 1 END) as not_started,
+                COUNT(CASE WHEN progress_percentage > 0 AND progress_percentage < 100 THEN 1 END) as in_progress,
+                COUNT(CASE WHEN progress_percentage = 100 THEN 1 END) as completed
+            ')
+            ->first();
+
+        // Quiz statistics (if lesson has quizzes)
+        $quizStats = [];
+        if ($lesson->quizzes->count() > 0) {
+            foreach ($lesson->quizzes as $quiz) {
+                $attempts = \App\Models\QuizAttempt::where('quiz_id', $quiz->id)->count();
+                $avgScore = \App\Models\QuizAttempt::where('quiz_id', $quiz->id)->avg('score_percentage') ?? 0;
+                $passRate = $attempts > 0 
+                    ? (\App\Models\QuizAttempt::where('quiz_id', $quiz->id)->where('score_percentage', '>=', $quiz->passing_score ?? 70)->count() / $attempts) * 100 
+                    : 0;
+
+                $quizStats[] = [
+                    'quiz_id' => $quiz->id,
+                    'quiz_title' => $quiz->title,
+                    'total_attempts' => $attempts,
+                    'average_score' => round($avgScore, 2),
+                    'pass_rate' => round($passRate, 2),
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'lesson' => $lesson,
+            'analytics' => [
+                'students' => [
+                    'total_enrolled' => $totalStudents,
+                    'started_lesson' => $studentsStarted,
+                    'completed_lesson' => $studentsCompleted,
+                ],
+                'rates' => [
+                    'start_rate' => round($startRate, 2),
+                    'completion_rate' => round($completionRate, 2),
+                ],
+                'engagement' => [
+                    'average_time_spent' => round($avgTimeSpent / 60, 2), // Convert to minutes
+                ],
+                'progress_distribution' => $progressDistribution,
+                'recent_activity' => $recentProgress,
+                'quiz_statistics' => $quizStats,
+            ]
+        ]);
+    }
+
+    /**
+     * Export lesson analytics as CSV (Admin only)
+     */
+    public function exportAnalytics(Course $course, Lesson $lesson)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('admin')) {
+            abort(403);
+        }
+
+        $progressData = Progress::where('lesson_id', $lesson->id)
+            ->with('user:id,name,email')
+            ->get();
+
+        $csvData = [];
+        $csvData[] = ['Student Name', 'Email', 'Status', 'Progress %', 'Time Spent (minutes)', 'Started At', 'Completed At'];
+
+        foreach ($progressData as $progress) {
+            $csvData[] = [
+                $progress->user->name ?? 'Unknown',
+                $progress->user->email ?? 'Unknown',
+                ucfirst($progress->status),
+                $progress->progress_percentage,
+                round(($progress->time_spent ?? 0) / 60, 2),
+                $progress->created_at->format('Y-m-d H:i:s'),
+                $progress->completed_at ? $progress->completed_at->format('Y-m-d H:i:s') : 'Not completed',
+            ];
+        }
+
+        $filename = "lesson-{$lesson->id}-analytics-" . now()->format('Y-m-d') . ".csv";
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($csvData) {
+            $file = fopen('php://output', 'w');
+            foreach ($csvData as $row) {
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

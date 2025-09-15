@@ -105,12 +105,102 @@ class Lesson extends Model
         }
 
         // Admin has access to everything
-        if ($user->role === 'admin') {
+        if ($user->hasRole('admin')) {
             return true;
         }
 
         // Check if user has access to the course
-        return $this->course->hasAccess($user);
+        if (!$this->course->hasAccess($user)) {
+            return false;
+        }
+
+        // Check prerequisites
+        return $this->checkPrerequisites($user);
+    }
+
+    /**
+     * Check if user meets prerequisites for this lesson
+     */
+    public function checkPrerequisites($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        // Admin bypasses prerequisites
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        // Check content locks
+        $contentLocks = $this->contentLocks()->active()->get();
+        
+        foreach ($contentLocks as $lock) {
+            if (!$lock->isUnlockedFor($user)) {
+                return false;
+            }
+        }
+
+        // Check if previous lessons in order are completed
+        $previousLessons = $this->course->lessons()
+            ->where('order', '<', $this->order)
+            ->where('is_free', false) // Only check non-free lessons
+            ->get();
+
+        foreach ($previousLessons as $previousLesson) {
+            if (!$previousLesson->isCompletedByUser($user)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get reasons why lesson is locked for user
+     */
+    public function getLockReasons($user): array
+    {
+        $reasons = [];
+
+        if (!$user) {
+            return ['You must be logged in to access this lesson'];
+        }
+
+        if ($user->hasRole('admin')) {
+            return [];
+        }
+
+        // Check course access
+        if (!$this->course->hasAccess($user)) {
+            $reasons[] = 'You must be enrolled in this course';
+        }
+
+        // Check content locks
+        $contentLocks = $this->contentLocks()->active()->get();
+        
+        foreach ($contentLocks as $lock) {
+            if (!$lock->isUnlockedFor($user)) {
+                $reasons[] = $lock->getDescription();
+            }
+        }
+
+        // Check previous lessons
+        $incompletePrevious = $this->course->lessons()
+            ->where('order', '<', $this->order)
+            ->where('is_free', false)
+            ->whereDoesntHave('progress', function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->where('status', 'completed');
+            })
+            ->pluck('title')
+            ->toArray();
+
+        if (!empty($incompletePrevious)) {
+            $reasons[] = 'Complete previous lessons: ' . implode(', ', $incompletePrevious);
+        }
+
+        return $reasons;
     }
 
     /**
