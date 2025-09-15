@@ -77,43 +77,6 @@ class H5PController extends Controller
     }
 
     /**
-     * Show H5P content editor
-     */
-    public function edit(LessonContent $content): View
-    {
-        // Authorization handled by role:admin middleware
-
-        if ($content->content_type !== 'h5p') {
-            abort(404);
-        }
-
-        return view('admin.h5p.edit', compact('content'));
-    }
-
-    /**
-     * Update H5P content
-     */
-    public function update(Request $request, LessonContent $content): RedirectResponse
-    {
-        // Authorization handled by role:admin middleware
-
-        if ($content->content_type !== 'h5p') {
-            abort(404);
-        }
-
-        $validated = $request->validate([
-            'settings' => 'nullable|array',
-            'is_active' => 'boolean',
-        ]);
-
-        $content->update($validated);
-
-        return redirect()->route('admin.h5p.index')
-            ->with('success', 'H5P content updated successfully.');
-    }
-
-
-    /**
      * Embed H5P content for display
      */
     public function embed(H5PContent $h5pContent): View
