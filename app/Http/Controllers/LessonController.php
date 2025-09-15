@@ -155,15 +155,24 @@ class LessonController extends Controller
                 break;
                 
             case 'h5p':
-                // Handle H5P file upload if present
-                if (request()->hasFile('h5p_file')) {
-                    $file = request()->file('h5p_file');
-                    $path = $file->store('h5p-content', 'public');
-                    $contentData = [
-                        'file_path' => $path,
-                        'original_name' => $file->getClientOriginalName()
-                    ];
+                // Handle H5P content ID from library selection
+                $h5pContentId = $blockData['content']; // This should be the H5P content ID
+                
+                // Validate that the H5P content exists and is ready
+                $h5pContent = \App\Models\H5PContent::where('id', $h5pContentId)
+                    ->where('upload_status', 'completed')
+                    ->where('is_active', true)
+                    ->first();
+                
+                if (!$h5pContent) {
+                    throw new \Exception("H5P content with ID {$h5pContentId} not found or not ready");
                 }
+                
+                $contentData = [
+                    'h5p_content_id' => $h5pContentId,
+                    'title' => $h5pContent->title,
+                    'content_type' => $h5pContent->content_type,
+                ];
                 break;
                 
             case 'code':
@@ -192,13 +201,35 @@ class LessonController extends Controller
                 ];
         }
         
-        return $lesson->contents()->create([
+        // Prepare lesson content data
+        $lessonContentData = [
             'content_type' => $blockData['type'] === 'youtube' || $blockData['type'] === 'vimeo' ? 'video' : $blockData['type'],
             'content_data' => $contentData,
             'settings' => $settings,
             'order' => $order,
             'is_active' => true
-        ]);
+        ];
+
+        // For H5P content, also set the h5p_content_id field
+        if ($blockData['type'] === 'h5p' && isset($contentData['h5p_content_id'])) {
+            $lessonContentData['h5p_content_id'] = $contentData['h5p_content_id'];
+        }
+
+        $lessonContent = $lesson->contents()->create($lessonContentData);
+
+        // For H5P content, create usage tracking record
+        if ($blockData['type'] === 'h5p' && isset($contentData['h5p_content_id'])) {
+            \App\Models\H5PUsage::create([
+                'h5p_content_id' => $contentData['h5p_content_id'],
+                'lesson_content_id' => $lessonContent->id,
+                'course_id' => $lesson->course_id,
+                'usage_type' => 'lesson_content',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $lessonContent;
     }
 
     /**
