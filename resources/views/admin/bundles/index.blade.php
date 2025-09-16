@@ -1,15 +1,33 @@
-@extends('layouts.admin')
+<x-app-layout>
+    <x-slot name="header">
+        <div style="background: linear-gradient(135deg, #475569 0%, #6B7280 50%, #71717A 100%) !important; min-height: 120px !important; display: block !important; width: 100% !important;">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold text-white mb-2">📦 Course Bundles</h1>
+                        <p class="text-slate-200 text-lg">Manage your course bundle offerings</p>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl px-6 py-4 border border-white/20">
+                            <div class="text-white text-center">
+                                <div class="text-2xl font-bold">Admin Panel</div>
+                                <div class="text-slate-200 text-sm">Bundle Management</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </x-slot>
 
-@section('title', 'Manage Bundles')
-
-@section('content')
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Course Bundles</h1>
-                <p class="text-gray-600 mt-2">Manage your course bundle offerings</p>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('admin.dashboard') }}" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
             </div>
             <a href="{{ route('admin.bundles.create') }}" 
                class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
@@ -147,4 +165,4 @@
         @endif
     </div>
 </div>
-@endsection
+</x-app-layout>

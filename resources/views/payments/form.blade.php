@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Complete Payment')
-
-@section('content')
+<x-app-layout>
 <div class="min-h-screen bg-gray-50 py-12">
     <div class="max-w-md mx-auto">
         <div class="bg-white rounded-lg shadow-lg p-6">
@@ -87,4 +83,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-app-layout>
