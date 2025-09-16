@@ -202,6 +202,62 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has purchased a bundle
+     */
+    public function hasPurchasedBundle(Bundle $bundle): bool
+    {
+        return $this->payments()
+                    ->where('bundle_id', $bundle->id)
+                    ->where('status', 'completed')
+                    ->exists();
+    }
+
+    /**
+     * Get user's purchased bundles
+     */
+    public function purchasedBundles()
+    {
+        return Bundle::whereIn('id', 
+            $this->payments()
+                 ->where('status', 'completed')
+                 ->whereNotNull('bundle_id')
+                 ->pluck('bundle_id')
+        );
+    }
+
+    /**
+     * Enroll in all courses from a bundle
+     */
+    public function enrollInBundle(Bundle $bundle): void
+    {
+        foreach ($bundle->courses as $course) {
+            $this->enrollInCourse($course);
+        }
+    }
+
+    /**
+     * Check if user has an active subscription
+     */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->subscriptions()
+                    ->where('status', 'active')
+                    ->where('end_date', '>', now())
+                    ->exists();
+    }
+
+    /**
+     * Get user's active subscription
+     */
+    public function getActiveSubscription()
+    {
+        return $this->subscriptions()
+                    ->where('status', 'active')
+                    ->where('end_date', '>', now())
+                    ->first();
+    }
+
+    /**
      * Scope for admin users
      */
     public function scopeAdmins($query)

@@ -8,6 +8,7 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\BundleController;
 use App\Http\Controllers\H5PController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -182,5 +183,34 @@ Route::middleware(['auth', 'verified', 'role:instructor'])->prefix('instructor')
     Route::get('/courses/{course}/lessons', [LessonController::class, 'instructorIndex'])->name('courses.lessons.index');
     Route::resource('courses.lessons', LessonController::class)->except(['show'])->shallow();
 });
+
+// Enrollment and Purchase Routes
+Route::middleware(['auth'])->group(function () {
+    // Course Enrollment
+    Route::post('/courses/{course}/enroll-free', [EnrollmentController::class, 'enrollFreeCourse'])->name('enrollments.free');
+    Route::post('/courses/{course}/purchase', [EnrollmentController::class, 'purchaseCourse'])->name('enrollments.purchase.course');
+    
+    // Bundle Purchase
+    Route::post('/bundles/{bundle}/purchase', [EnrollmentController::class, 'purchaseBundle'])->name('enrollments.purchase.bundle');
+    
+    // Subscription Purchase
+    Route::post('/subscription/purchase', [EnrollmentController::class, 'purchaseSubscription'])->name('enrollments.purchase.subscription');
+    
+    // User Enrollments
+    Route::get('/my-enrollments', [EnrollmentController::class, 'myEnrollments'])->name('enrollments.index');
+    
+    // Payment Management
+    Route::get('/payments/{payment}/form', [PaymentController::class, 'showForm'])->name('payments.form');
+    Route::post('/payments/{payment}/simulate', [PaymentController::class, 'simulatePayment'])->name('payments.simulate');
+    Route::get('/payment-history', [PaymentController::class, 'history'])->name('payments.history');
+});
+
+// Bundle Routes
+Route::get('/bundles', [BundleController::class, 'index'])->name('bundles.index');
+Route::get('/bundles/{bundle}', [BundleController::class, 'show'])->name('bundles.show');
+
+// Payment Webhooks (for SSLCommerz integration)
+Route::post('/payments/{payment}/success', [EnrollmentController::class, 'handlePaymentSuccess'])->name('payments.success');
+Route::post('/payments/{payment}/failure', [EnrollmentController::class, 'handlePaymentFailure'])->name('payments.failure');
 
 require __DIR__.'/auth.php';

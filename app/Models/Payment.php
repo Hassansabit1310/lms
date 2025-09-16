@@ -15,6 +15,7 @@ class Payment extends Model
         'user_id',
         'course_id',
         'subscription_id',
+        'bundle_id',
         'amount',
         'gateway',
         'transaction_id',
@@ -27,6 +28,7 @@ class Payment extends Model
         'user_id' => 'integer',
         'course_id' => 'integer',
         'subscription_id' => 'integer',
+        'bundle_id' => 'integer',
         'amount' => 'decimal:2',
         'gateway_response' => 'array',
     ];
@@ -67,6 +69,14 @@ class Payment extends Model
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    /**
+     * Get the bundle that owns the payment
+     */
+    public function bundle(): BelongsTo
+    {
+        return $this->belongsTo(Bundle::class);
     }
 
     /**
@@ -117,11 +127,19 @@ class Payment extends Model
     }
 
     /**
-     * Get payment type (course or subscription)
+     * Get payment type (course, bundle, or subscription)
      */
     public function getTypeAttribute(): string
     {
-        return $this->course_id ? 'course' : 'subscription';
+        if ($this->course_id) {
+            return 'course';
+        } elseif ($this->bundle_id) {
+            return 'bundle';
+        } elseif ($this->subscription_id) {
+            return 'subscription';
+        }
+        
+        return 'unknown';
     }
 
     /**
@@ -162,5 +180,13 @@ class Payment extends Model
     public function scopeSubscriptionPayments($query)
     {
         return $query->whereNotNull('subscription_id');
+    }
+
+    /**
+     * Scope for bundle payments
+     */
+    public function scopeBundlePayments($query)
+    {
+        return $query->whereNotNull('bundle_id');
     }
 }

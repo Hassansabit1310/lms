@@ -87,6 +87,17 @@ class Course extends Model
     }
 
     /**
+     * Get the bundles that include this course
+     */
+    public function bundles(): BelongsToMany
+    {
+        return $this->belongsToMany(Bundle::class, 'bundle_courses')
+                    ->withPivot(['order', 'individual_price', 'is_primary'])
+                    ->withTimestamps()
+                    ->where('bundles.is_active', true);
+    }
+
+    /**
      * Get quizzes for this course
      */
     public function quizzes(): HasMany
@@ -185,17 +196,25 @@ class Course extends Model
             return true;
         }
 
-        // Check if user has enrolled in this course
+        // Check if user has enrolled in this course (direct purchase)
         if ($this->enrollments()->where('user_id', $user->id)->exists()) {
             return true;
         }
 
-        // Check if user has active subscription
-        $activeSubscription = $user->subscriptions()
-            ->where('status', 'active')
-            ->where('end_date', '>', now())
+        // Check if user has purchased a bundle containing this course
+        $bundleAccess = $user->payments()
+            ->where('status', 'completed')
+            ->whereNotNull('bundle_id')
+            ->whereHas('bundle.courses', function ($query) {
+                $query->where('courses.id', $this->id);
+            })
             ->exists();
 
-        return $activeSubscription;
+        if ($bundleAccess) {
+            return true;
+        }
+
+        // Check if user has active subscription
+        return $user->hasActiveSubscription();
     }
 }
