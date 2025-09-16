@@ -236,28 +236,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has an active subscription
-     */
-    public function hasActiveSubscription(): bool
-    {
-        return $this->subscriptions()
-                    ->where('status', 'active')
-                    ->where('end_date', '>', now())
-                    ->exists();
-    }
-
-    /**
-     * Get user's active subscription
-     */
-    public function getActiveSubscription()
-    {
-        return $this->subscriptions()
-                    ->where('status', 'active')
-                    ->where('end_date', '>', now())
-                    ->first();
-    }
-
-    /**
      * Scope for admin users
      */
     public function scopeAdmins($query)
