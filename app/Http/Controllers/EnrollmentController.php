@@ -154,7 +154,7 @@ class EnrollmentController extends Controller
         
         $subscription = Subscription::create([
             'user_id' => $user->id,
-            'type' => $validated['type'],
+            'plan_type' => $validated['type'],
             'amount' => $amount,
             'start_date' => now(),
             'end_date' => $endDate,

@@ -15,7 +15,7 @@
         <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 mb-8 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-xl font-bold">{{ ucfirst($activeSubscription->type) }} Subscription</h3>
+                    <h3 class="text-xl font-bold">{{ ucfirst($activeSubscription->plan_type) }} Subscription</h3>
                     <p class="opacity-90">Access to all premium courses</p>
                     <p class="text-sm opacity-75 mt-1">
                         Expires: {{ $activeSubscription->end_date->format('M d, Y') }} 
@@ -24,7 +24,7 @@
                 </div>
                 <div class="text-right">
                     <div class="text-2xl font-bold">${{ number_format($activeSubscription->amount, 2) }}</div>
-                    <div class="text-sm opacity-75">{{ $activeSubscription->type }}</div>
+                    <div class="text-sm opacity-75">{{ $activeSubscription->plan_type }}</div>
                 </div>
             </div>
         </div>

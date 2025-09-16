@@ -24,7 +24,7 @@
                         @elseif($payment->bundle)
                             {{ $payment->bundle->name }} (Bundle)
                         @elseif($payment->subscription)
-                            {{ ucfirst($payment->subscription->type) }} Subscription
+                            {{ ucfirst($payment->subscription->plan_type) }} Subscription
                         @endif
                     </span>
                 </div>

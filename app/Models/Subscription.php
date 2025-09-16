@@ -14,7 +14,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'user_id',
-        'type',
+        'plan_type',
         'amount',
         'start_date',
         'end_date',
@@ -77,7 +77,7 @@ class Subscription extends Model
      */
     public function renew(): void
     {
-        $duration = $this->type === 'monthly' ? 1 : 12;
+        $duration = $this->plan_type === 'monthly' ? 1 : 12;
         
         $this->update([
             'start_date' => now(),

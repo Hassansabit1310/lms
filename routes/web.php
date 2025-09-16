@@ -125,13 +125,13 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('/courses/{course}/lessons/{lesson}', [LessonController::class, 'destroy'])->name('courses.lessons.destroy');
     
     // Bundle management (admin only)
-    Route::get('/bundles', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('admin.bundles.index');
-    Route::get('/bundles/create', [\App\Http\Controllers\Admin\BundleController::class, 'create'])->name('admin.bundles.create');
-    Route::post('/bundles', [\App\Http\Controllers\Admin\BundleController::class, 'store'])->name('admin.bundles.store');
-    Route::get('/bundles/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'show'])->name('admin.bundles.show');
-    Route::get('/bundles/{bundle}/edit', [\App\Http\Controllers\Admin\BundleController::class, 'edit'])->name('admin.bundles.edit');
-    Route::patch('/bundles/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'update'])->name('admin.bundles.update');
-    Route::delete('/bundles/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'destroy'])->name('admin.bundles.destroy');
+    Route::get('/bundles', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('bundles.index');
+    Route::get('/bundles/create', [\App\Http\Controllers\Admin\BundleController::class, 'create'])->name('bundles.create');
+    Route::post('/bundles', [\App\Http\Controllers\Admin\BundleController::class, 'store'])->name('bundles.store');
+    Route::get('/bundles/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'show'])->name('bundles.show');
+    Route::get('/bundles/{bundle}/edit', [\App\Http\Controllers\Admin\BundleController::class, 'edit'])->name('bundles.edit');
+    Route::patch('/bundles/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'update'])->name('bundles.update');
+    Route::delete('/bundles/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'destroy'])->name('bundles.destroy');
 
     // H5P Content Management
     Route::get('/h5p', [H5PController::class, 'index'])->name('h5p.index');
