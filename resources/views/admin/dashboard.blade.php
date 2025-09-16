@@ -184,6 +184,20 @@
                             <span class="font-medium text-orange-700">Upload H5P Content</span>
                         </a>
 
+                        <a href="{{ route('admin.bundles.index') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                            <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-box text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium text-yellow-700">Manage Bundles</span>
+                        </a>
+
+                        <a href="{{ route('admin.bundles.create') }}" class="flex items-center p-3 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
+                            <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-plus text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium text-amber-700">Create Bundle</span>
+                        </a>
+
                         <a href="{{ route('admin.reports.revenue') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
                             <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -118,24 +118,111 @@
                 <!-- Right: Action Buttons (1/3) -->
                 <div class="lg:col-span-1">
                     <div class="space-y-4">
-                        <button class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
-                            <i class="fas fa-shopping-cart" style="color: #0d9488;"></i>
-                            <span style="color: #0d9488;">Add to cart</span>
-                        </button>
-                        <button class="w-full border-2 border-white text-white font-semibold py-4 px-6 rounded-xl hover:bg-white/10 transition-all duration-200 flex items-center justify-center gap-2">
-                            <i class="far fa-heart"></i>
-                            Wishlist
-                        </button>
+                        @php
+                            $user = auth()->user();
+                            $hasAccess = $user && $course->hasAccess($user);
+                            $isEnrolled = $user && $user->enrollments()->where('course_id', $course->id)->exists();
+                            $hasSubscription = $user && $user->hasActiveSubscription();
+                            $hasPurchased = $user && $user->payments()->where('course_id', $course->id)->where('status', 'completed')->exists();
+                        @endphp
+
+                        @if($hasAccess)
+                            <!-- User has access - show access granted -->
+                            <div class="w-full bg-green-600 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 text-white">
+                                <i class="fas fa-check-circle"></i>
+                                <span>
+                                    @if($hasSubscription)
+                                        Access via Subscription
+                                    @elseif($hasPurchased)
+                                        Purchased
+                                    @elseif($course->is_free)
+                                        Enrolled
+                                    @else
+                                        Access Granted
+                                    @endif
+                                </span>
+                            </div>
+                            
+                            @if($isEnrolled)
+                                @php $progress = $user->getCourseProgress($course); @endphp
+                                <div class="bg-white/15 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                                    <div class="text-white text-sm font-medium mb-2">Your Progress</div>
+                                    <div class="bg-white/20 rounded-full h-3 mb-2">
+                                        <div class="bg-green-400 h-3 rounded-full" style="width: {{ $progress }}%"></div>
+                                    </div>
+                                    <div class="text-white/80 text-xs">{{ $progress }}% Complete</div>
+                                </div>
+                            @endif
+                        @else
+                            <!-- User doesn't have access - show enrollment/purchase options -->
+                            @if($course->is_free)
+                                <!-- Free Course - Show Enroll Button -->
+                                @auth
+                                    <form method="POST" action="{{ route('enrollments.free', $course) }}">
+                                        @csrf
+                                        <button type="submit" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
+                                            <i class="fas fa-graduation-cap" style="color: #0d9488;"></i>
+                                            <span style="color: #0d9488;">Enroll for Free</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login') }}" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
+                                        <i class="fas fa-sign-in-alt" style="color: #0d9488;"></i>
+                                        <span style="color: #0d9488;">Login to Enroll</span>
+                                    </a>
+                                @endauth
+                            @else
+                                <!-- Paid Course - Show Purchase Button -->
+                                @auth
+                                    <form method="POST" action="{{ route('enrollments.purchase.course', $course) }}">
+                                        @csrf
+                                        <button type="submit" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
+                                            <i class="fas fa-shopping-cart" style="color: #0d9488;"></i>
+                                            <span style="color: #0d9488;">Purchase Course</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login') }}" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
+                                        <i class="fas fa-sign-in-alt" style="color: #0d9488;"></i>
+                                        <span style="color: #0d9488;">Login to Purchase</span>
+                                    </a>
+                                @endauth
+                            @endif
+
+                            <!-- Wishlist Button -->
+                            <button class="w-full border-2 border-white text-white font-semibold py-4 px-6 rounded-xl hover:bg-white/10 transition-all duration-200 flex items-center justify-center gap-2">
+                                <i class="far fa-heart"></i>
+                                Wishlist
+                            </button>
+                        @endif
+
+                        <!-- Subscription Promotion -->
+                        @if(!$hasSubscription)
                         <div class="bg-white/15 backdrop-blur-md rounded-xl p-6 text-center border border-white/20 shadow-lg">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <i class="fas fa-crown text-yellow-300"></i>
-                                <span class="text-white font-bold text-lg">Subscribe @ 59%</span>
+                                <span class="text-white font-bold text-lg">Subscribe & Save</span>
                             </div>
-                            <div class="text-white/90 text-sm leading-relaxed">Get this course, plus 25,000+ of our top-rated courses, with Personal Plan.</div>
-                            <button class="mt-4 w-full bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg hover:bg-yellow-300 transition-colors">
-                                Try Personal Plan
-                            </button>
+                            <div class="text-white/90 text-sm leading-relaxed mb-4">Get this course + access to all premium courses with our subscription plan.</div>
+                            <div class="text-white text-xs mb-3">
+                                <div>Monthly: $19.99/month</div>
+                                <div>Annual: $199.99/year <span class="text-yellow-300">(Save 17%)</span></div>
+                            </div>
+                            @auth
+                                <form method="POST" action="{{ route('enrollments.purchase.subscription') }}">
+                                    @csrf
+                                    <input type="hidden" name="type" value="monthly">
+                                    <button type="submit" class="w-full bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg hover:bg-yellow-300 transition-colors">
+                                        Try Subscription
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}" class="block w-full bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg hover:bg-yellow-300 transition-colors">
+                                    Login to Subscribe
+                                </a>
+                            @endauth
                         </div>
+                        @endif
                     </div>
                 </div>
                             </div>

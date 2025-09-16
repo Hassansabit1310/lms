@@ -55,6 +55,20 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
+                        <div class="border-t border-gray-100 my-1"></div>
+                        <div class="px-4 py-2 text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                            My Learning
+                        </div>
+                        <x-dropdown-link :href="route('enrollments.index')">
+                            🎓 My Courses
+                        </x-dropdown-link>
+                        <x-dropdown-link :href="route('bundles.index')">
+                            📦 Course Bundles
+                        </x-dropdown-link>
+                        <x-dropdown-link :href="route('payments.history')">
+                            💳 Payment History
+                        </x-dropdown-link>
+
                         @if(auth()->user()->role === 'admin')
                             <div class="border-t border-gray-100 my-1"></div>
                             <div class="px-4 py-2 text-xs text-gray-500 font-semibold uppercase tracking-wider">
