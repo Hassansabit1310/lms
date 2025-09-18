@@ -93,8 +93,15 @@ class Course extends Model
     {
         return $this->belongsToMany(Bundle::class, 'bundle_courses')
                     ->withPivot(['order', 'individual_price', 'is_primary'])
-                    ->withTimestamps()
-                    ->where('bundles.is_active', true);
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get active bundles that include this course
+     */
+    public function activeBundles(): BelongsToMany
+    {
+        return $this->bundles()->where('bundles.is_active', true);
     }
 
     /**
