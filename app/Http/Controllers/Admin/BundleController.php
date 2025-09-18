@@ -33,7 +33,6 @@ class BundleController extends Controller
     public function create(): View
     {
         $courses = Course::where('status', 'published')
-            ->where('is_active', true)
             ->where('is_free', false) // Only paid courses for bundles
             ->orderBy('title')
             ->get();
@@ -129,7 +128,6 @@ class BundleController extends Controller
         $bundle->load('courses');
         
         $courses = Course::where('status', 'published')
-            ->where('is_active', true)
             ->where('is_free', false)
             ->orderBy('title')
             ->get();

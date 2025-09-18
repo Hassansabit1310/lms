@@ -17,7 +17,6 @@ class BundleController extends Controller
         $bundles = Bundle::available()
             ->with(['courses' => function ($query) {
                 $query->where('courses.status', 'published')
-                      ->where('courses.is_active', true)
                       ->orderBy('bundle_courses.order');
             }])
             ->orderBy('is_featured', 'desc')
@@ -38,7 +37,6 @@ class BundleController extends Controller
 
         $bundle->load(['courses' => function ($query) {
             $query->where('courses.status', 'published')
-                  ->where('courses.is_active', true)
                   ->withCount('lessons')
                   ->orderBy('bundle_courses.order');
         }]);

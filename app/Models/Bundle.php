@@ -79,7 +79,7 @@ class Bundle extends Model
      */
     public function activeCourses(): BelongsToMany
     {
-        return $this->courses()->where('courses.is_active', true);
+        return $this->courses()->where('courses.status', 'published');
     }
 
     /**
