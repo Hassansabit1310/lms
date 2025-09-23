@@ -198,6 +198,17 @@
                             <span class="font-medium text-amber-700">Create Bundle</span>
                         </a>
 
+                        <a href="{{ route('admin.payments.manual') }}" class="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-credit-card text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium text-purple-700">Manual Payments</span>
+                            @php $pendingCount = \App\Models\Payment::pendingApproval()->count(); @endphp
+                            @if($pendingCount > 0)
+                                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ $pendingCount }}</span>
+                            @endif
+                        </a>
+
                         <a href="{{ route('admin.reports.revenue') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
                             <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

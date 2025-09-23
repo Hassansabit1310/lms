@@ -171,23 +171,51 @@
                                         <span style="color: #0d9488;">Login to Enroll</span>
                                     </a>
                                 @endauth
-                            @else
-                                <!-- Paid Course - Show Purchase Button -->
-                                @auth
-                                    <form method="POST" action="{{ route('enrollments.purchase.course', $course) }}">
-                                        @csrf
-                                        <button type="submit" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
-                                            <i class="fas fa-shopping-cart" style="color: #0d9488;"></i>
-                                            <span style="color: #0d9488;">Purchase Course</span>
-                                        </button>
-                                    </form>
-                                @else
-                                    <a href="{{ route('login') }}" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
-                                        <i class="fas fa-sign-in-alt" style="color: #0d9488;"></i>
-                                        <span style="color: #0d9488;">Login to Purchase</span>
-                                    </a>
-                                @endauth
-                            @endif
+            @else
+                <!-- Paid Course - Show Purchase/Access Button -->
+                @auth
+                    @if(auth()->user()->hasPurchasedCourse($course))
+                        <!-- Already Purchased - Show Access Button -->
+                        <div class="w-full bg-green-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Course Purchased ✓</span>
+                        </div>
+                        <a href="{{ route('lessons.show', ['course' => $course, 'lesson' => $course->lessons->first()]) }}" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2 mt-3" style="color: #0d9488;">
+                            <i class="fas fa-play" style="color: #0d9488;"></i>
+                            <span style="color: #0d9488;">Start Learning</span>
+                        </a>
+                    @else
+                        <!-- Show Purchase Button -->
+                        <a href="{{ route('payments.manual.course', $course) }}" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
+                            <i class="fas fa-credit-card" style="color: #0d9488;"></i>
+                            <span style="color: #0d9488;">Purchase Course</span>
+                        </a>
+
+                        <!-- Payment Methods Info -->
+                        <div class="mt-4 bg-white/15 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                            <h4 class="text-white font-semibold mb-2 text-sm">💳 Payment Methods Available</h4>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-white/90">
+                                <div class="flex items-center">
+                                    <i class="fas fa-university mr-1"></i>
+                                    Bank Transfer
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-mobile-alt mr-1"></i>
+                                    Mobile Wallets
+                                </div>
+                            </div>
+                            <p class="text-xs text-white/70 mt-2">
+                                Quick approval within 24 hours
+                            </p>
+                        </div>
+                    @endif
+                @else
+                    <a href="{{ route('login') }}" class="w-full bg-white font-bold py-4 px-6 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2" style="color: #0d9488;">
+                        <i class="fas fa-sign-in-alt" style="color: #0d9488;"></i>
+                        <span style="color: #0d9488;">Login to Purchase</span>
+                    </a>
+                @endauth
+            @endif
 
                             <!-- Wishlist Button -->
                             <button class="w-full border-2 border-white text-white font-semibold py-4 px-6 rounded-xl hover:bg-white/10 transition-all duration-200 flex items-center justify-center gap-2">

@@ -18,10 +18,19 @@ class Payment extends Model
         'bundle_id',
         'amount',
         'gateway',
+        'payment_method',
+        'wallet_provider',
         'transaction_id',
         'gateway_transaction_id',
+        'user_transaction_id',
+        'payment_note',
+        'sender_name',
+        'sender_mobile',
         'status',
         'gateway_response',
+        'approved_at',
+        'approved_by',
+        'admin_note',
     ];
 
     protected $casts = [
@@ -29,8 +38,10 @@ class Payment extends Model
         'course_id' => 'integer',
         'subscription_id' => 'integer',
         'bundle_id' => 'integer',
+        'approved_by' => 'integer',
         'amount' => 'decimal:2',
         'gateway_response' => 'array',
+        'approved_at' => 'datetime',
     ];
 
     /**
@@ -80,11 +91,19 @@ class Payment extends Model
     }
 
     /**
+     * Get the admin who approved the payment
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
      * Check if payment is successful
      */
     public function isSuccessful(): bool
     {
-        return $this->status === 'success';
+        return in_array($this->status, ['success', 'approved']);
     }
 
     /**
@@ -100,7 +119,31 @@ class Payment extends Model
      */
     public function isFailed(): bool
     {
-        return $this->status === 'failed';
+        return in_array($this->status, ['failed', 'rejected']);
+    }
+
+    /**
+     * Check if payment is approved
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    /**
+     * Check if payment is rejected
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
+    }
+
+    /**
+     * Check if payment is manual
+     */
+    public function isManual(): bool
+    {
+        return in_array($this->payment_method, ['bank_transfer', 'mobile_wallet']);
     }
 
     /**
@@ -123,6 +166,32 @@ class Payment extends Model
         $this->update([
             'status' => 'failed',
             'gateway_response' => $response,
+        ]);
+    }
+
+    /**
+     * Approve manual payment
+     */
+    public function approve(User $admin, string $note = null): void
+    {
+        $this->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $admin->id,
+            'admin_note' => $note,
+        ]);
+    }
+
+    /**
+     * Reject manual payment
+     */
+    public function reject(User $admin, string $note = null): void
+    {
+        $this->update([
+            'status' => 'rejected',
+            'approved_at' => now(),
+            'approved_by' => $admin->id,
+            'admin_note' => $note,
         ]);
     }
 
@@ -188,5 +257,37 @@ class Payment extends Model
     public function scopeBundlePayments($query)
     {
         return $query->whereNotNull('bundle_id');
+    }
+
+    /**
+     * Scope for manual payments
+     */
+    public function scopeManualPayments($query)
+    {
+        return $query->whereIn('payment_method', ['bank_transfer', 'mobile_wallet']);
+    }
+
+    /**
+     * Scope for approved payments
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    /**
+     * Scope for rejected payments
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
+
+    /**
+     * Scope for pending approval
+     */
+    public function scopePendingApproval($query)
+    {
+        return $query->where('status', 'pending')->whereIn('payment_method', ['bank_transfer', 'mobile_wallet']);
     }
 }

@@ -141,6 +141,116 @@
             </div>
         </div>
         @endif
+
+        <!-- Payment History -->
+        @if($payments->count() > 0)
+        <div class="bg-white rounded-lg shadow-sm mt-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Payment History</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach($payments as $payment)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ $payment->created_at->format('M d, Y') }}</div>
+                                <div class="text-xs text-gray-500">{{ $payment->created_at->format('g:i A') }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    @if($payment->course)
+                                        <i class="fas fa-book mr-1 text-blue-500"></i>
+                                        {{ $payment->course->title }}
+                                    @elseif($payment->bundle)
+                                        <i class="fas fa-cube mr-1 text-purple-500"></i>
+                                        {{ $payment->bundle->name }}
+                                    @elseif($payment->subscription)
+                                        <i class="fas fa-crown mr-1 text-gold-500"></i>
+                                        {{ ucfirst($payment->subscription->plan_type) }} Subscription
+                                    @else
+                                        <span class="text-gray-500">Unknown Item</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    @if($payment->payment_method === 'bank_transfer')
+                                        <i class="fas fa-university mr-1 text-blue-600"></i>
+                                        Bank Transfer
+                                    @elseif($payment->payment_method === 'mobile_wallet')
+                                        <i class="fas fa-mobile-alt mr-1 text-green-600"></i>
+                                        {{ ucfirst($payment->wallet_provider ?? 'Mobile Wallet') }}
+                                    @else
+                                        <i class="fas fa-credit-card mr-1 text-gray-600"></i>
+                                        {{ ucfirst($payment->gateway ?? 'Online Payment') }}
+                                    @endif
+                                </div>
+                                @if($payment->user_transaction_id)
+                                <div class="text-xs text-gray-500">TRX: {{ $payment->user_transaction_id }}</div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${{ number_format($payment->amount, 2) }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($payment->status === 'approved' || $payment->status === 'success')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Approved
+                                    </span>
+                                @elseif($payment->status === 'pending')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Pending
+                                    </span>
+                                @elseif($payment->status === 'rejected' || $payment->status === 'failed')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i class="fas fa-times-circle mr-1"></i>
+                                        {{ ucfirst($payment->status) }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ ucfirst($payment->status) }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                @if($payment->isManual())
+                                    <a href="{{ route('payments.manual.status', $payment) }}" 
+                                       class="text-indigo-600 hover:text-indigo-900">
+                                        View Details
+                                    </a>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            @if($payments->count() >= 10)
+            <div class="px-6 py-4 border-t border-gray-200 text-center">
+                <a href="{{ route('payments.history') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View All Payment History →
+                </a>
+            </div>
+            @endif
+        </div>
+        @endif
     </div>
 </div>
 </x-app-layout>

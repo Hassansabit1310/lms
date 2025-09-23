@@ -210,7 +210,7 @@ class Course extends Model
 
         // Check if user has purchased a bundle containing this course
         $bundleAccess = $user->payments()
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'success', 'approved'])
             ->whereNotNull('bundle_id')
             ->whereHas('bundle.courses', function ($query) {
                 $query->where('courses.id', $this->id);

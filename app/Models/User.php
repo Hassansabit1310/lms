@@ -181,6 +181,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has purchased a course
+     */
+    public function hasPurchasedCourse(Course $course): bool
+    {
+        return $this->payments()
+                    ->where('course_id', $course->id)
+                    ->whereIn('status', ['completed', 'success', 'approved'])
+                    ->exists();
+    }
+
+    /**
      * Enroll in a course
      */
     public function enrollInCourse(Course $course): Enrollment
@@ -208,7 +219,7 @@ class User extends Authenticatable
     {
         return $this->payments()
                     ->where('bundle_id', $bundle->id)
-                    ->where('status', 'completed')
+                    ->whereIn('status', ['completed', 'success', 'approved'])
                     ->exists();
     }
 
@@ -219,7 +230,7 @@ class User extends Authenticatable
     {
         return Bundle::whereIn('id', 
             $this->payments()
-                 ->where('status', 'completed')
+                 ->whereIn('status', ['completed', 'success', 'approved'])
                  ->whereNotNull('bundle_id')
                  ->pluck('bundle_id')
         );

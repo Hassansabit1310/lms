@@ -178,6 +178,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
     
+    // Manual Payment Admin Routes
+    Route::get('/payments/manual/list', [\App\Http\Controllers\ManualPaymentController::class, 'adminIndex'])->name('payments.manual');
+    Route::post('/payments/{payment}/approve', [\App\Http\Controllers\ManualPaymentController::class, 'approve'])->name('payments.approve');
+    Route::post('/payments/{payment}/reject', [\App\Http\Controllers\ManualPaymentController::class, 'reject'])->name('payments.reject');
+    
 });
 
 // Instructor routes (for course creators)
@@ -212,6 +217,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payments/{payment}/form', [PaymentController::class, 'showForm'])->name('payments.form');
     Route::post('/payments/{payment}/simulate', [PaymentController::class, 'simulatePayment'])->name('payments.simulate');
     Route::get('/payment-history', [PaymentController::class, 'history'])->name('payments.history');
+    
+    // Manual Payment Routes
+    Route::get('/payments/manual/course/{course}', [\App\Http\Controllers\ManualPaymentController::class, 'courseForm'])->name('payments.manual.course');
+    Route::get('/payments/manual/bundle/{bundle}', [\App\Http\Controllers\ManualPaymentController::class, 'bundleForm'])->name('payments.manual.bundle');
+    Route::post('/payments/manual/submit', [\App\Http\Controllers\ManualPaymentController::class, 'submit'])->name('payments.manual.submit');
+    Route::get('/payments/{payment}/status', [\App\Http\Controllers\ManualPaymentController::class, 'status'])->name('payments.manual.status');
 });
 
 // Bundle Routes

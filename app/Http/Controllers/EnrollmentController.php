@@ -58,7 +58,7 @@ class EnrollmentController extends Controller
         }
 
         // Check if already purchased
-        if ($user->payments()->where('course_id', $course->id)->where('status', 'completed')->exists()) {
+        if ($user->payments()->where('course_id', $course->id)->whereIn('status', ['completed', 'success', 'approved'])->exists()) {
             return redirect()->route('courses.show', $course)->with('info', 'You have already purchased this course.');
         }
 
@@ -255,7 +255,14 @@ class EnrollmentController extends Controller
             ->where('end_date', '>', now())
             ->first();
 
-        return view('enrollments.index', compact('enrollments', 'purchasedBundles', 'activeSubscription'));
+        // Get payment history
+        $payments = $user->payments()
+            ->with(['course', 'bundle', 'subscription'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('enrollments.index', compact('enrollments', 'purchasedBundles', 'activeSubscription', 'payments'));
     }
 
     /**
