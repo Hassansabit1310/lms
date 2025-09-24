@@ -137,6 +137,8 @@
                                         <option value="text">📝 Text Content</option>
                                         <option value="h5p">🧩 H5P Interactive</option>
                                         <option value="code">💻 Code Example</option>
+                                        <option value="runnable_code">🚀 Runnable Code</option>
+                                        <option value="matter_js">⚛️ Matter.js Physics</option>
                                         <option value="quiz">❓ Quiz</option>
                                     </select>
                                 </div>
@@ -232,12 +234,14 @@
                             <h3 class="font-semibold text-gray-900">Content Block</h3>
                             <select onchange="switchContentType(this, ${index})" 
                                     class="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500">
-                                <option value="youtube">📺 YouTube Video</option>
-                                <option value="vimeo">🎬 Vimeo Video</option>
-                                <option value="text">📝 Text Content</option>
-                                <option value="h5p">🧩 H5P Interactive</option>
-                                <option value="code">💻 Code Example</option>
-                                <option value="quiz">❓ Quiz</option>
+                                        <option value="youtube">📺 YouTube Video</option>
+                                        <option value="vimeo">🎬 Vimeo Video</option>
+                                        <option value="text">📝 Text Content</option>
+                                        <option value="h5p">🧩 H5P Interactive</option>
+                                        <option value="code">💻 Code Example</option>
+                                        <option value="runnable_code">🚀 Runnable Code</option>
+                                        <option value="matter_js">⚛️ Matter.js Physics</option>
+                                        <option value="quiz">❓ Quiz</option>
                             </select>
                         </div>
                         <div class="flex items-center space-x-2">
@@ -370,6 +374,117 @@
                     labelText = 'Code';
                     placeholder = '// Enter your code here...';
                     inputElement = `<textarea name="content_blocks[${blockIndex}][content]" required rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm" placeholder="${placeholder}"></textarea>`;
+                    break;
+                case 'runnable_code':
+                    labelText = 'Runnable Code';
+                    inputElement = `
+                        <div class="space-y-4">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-blue-900 mb-2">🚀 Runnable Code Block</h4>
+                                <p class="text-blue-700 text-sm">Students will see your code in tabs and a live preview in a sandboxed iframe.</p>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description/Instructions</label>
+                                <textarea name="content_blocks[${blockIndex}][settings][description]" 
+                                          rows="3"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                          placeholder="Explain what this code demonstrates or what students should learn..."></textarea>
+                            </div>
+                            
+                            <!-- HTML Code -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">HTML Code</label>
+                                <textarea name="content_blocks[${blockIndex}][settings][html_code]" 
+                                          rows="6"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                          placeholder="<h1>Hello World!</h1>"></textarea>
+                            </div>
+                            
+                            <!-- CSS Code -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">CSS Code</label>
+                                <textarea name="content_blocks[${blockIndex}][settings][css_code]" 
+                                          rows="6"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                          placeholder="h1 { color: blue; }"></textarea>
+                            </div>
+                            
+                            <!-- JavaScript Code -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">JavaScript Code</label>
+                                <textarea name="content_blocks[${blockIndex}][settings][js_code]" 
+                                          rows="6"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                          placeholder="console.log('Hello World!');"></textarea>
+                            </div>
+                            
+                            <!-- Hidden field for content (required) -->
+                            <input type="hidden" name="content_blocks[${blockIndex}][content]" value="runnable_code_block" required>
+                        </div>
+                    `;
+                    break;
+                case 'matter_js':
+                    labelText = 'Matter.js Physics';
+                    inputElement = `
+                        <div class="space-y-4">
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-purple-900 mb-2">⚛️ Matter.js Physics Simulation</h4>
+                                <p class="text-purple-700 text-sm">Create interactive physics simulations with Matter.js engine.</p>
+                            </div>
+                            
+                            <!-- Canvas Size -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Canvas Width</label>
+                                    <input type="number" name="content_blocks[${blockIndex}][settings][width]" 
+                                           value="800" min="300" max="1200"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Canvas Height</label>
+                                    <input type="number" name="content_blocks[${blockIndex}][settings][height]" 
+                                           value="400" min="200" max="800"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                </div>
+                            </div>
+                            
+                            <!-- Matter.js Code -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Matter.js Code</label>
+                                <textarea name="content_blocks[${blockIndex}][settings][matter_js_code]" 
+                                          rows="12"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+                                          placeholder="// Create physics objects using currentEngine
+// Available variables: currentEngine (the physics engine), currentRender (the renderer)
+
+// Example: Bouncing balls
+const ground = Matter.Bodies.rectangle(400, 390, 800, 20, { 
+  isStatic: true,
+  render: { fillStyle: '#444' }
+});
+
+const balls = [];
+for (let i = 0; i < 5; i++) {
+  const ball = Matter.Bodies.circle(100 + i * 120, 50, 25, { 
+    restitution: 0.9,
+    render: { fillStyle: \`hsl(\${i * 72}, 70%, 50%)\` }
+  });
+  balls.push(ball);
+}
+
+// Add to world
+Matter.World.add(currentEngine.world, [ground, ...balls]);"></textarea>
+                                <p class="text-sm text-gray-600 mt-2">
+                                    <strong>Important:</strong> Use <code>currentEngine</code> and <code>currentRender</code> variables in your code. The physics engine is automatically started.
+                                </p>
+                            </div>
+                            
+                            <!-- Hidden field for content (required) -->
+                            <input type="hidden" name="content_blocks[${blockIndex}][content]" value="matter_js_simulation" required>
+                        </div>
+                    `;
                     break;
                 case 'quiz':
                     labelText = 'Quiz Title';

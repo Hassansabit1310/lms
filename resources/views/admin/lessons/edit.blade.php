@@ -243,6 +243,11 @@
 
                     <!-- Code Content -->
                     <div x-show="formData.type === 'code'" class="space-y-4">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p class="text-yellow-800 text-sm">
+                                <strong>Note:</strong> For runnable HTML/CSS/JS code with live preview, use the Multi-Content Lesson creator and add a "Runnable Code" block.
+                            </p>
+                        </div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Code Content *</label>
                         <textarea name="content" 
                                   x-model="formData.content"
@@ -250,16 +255,6 @@
                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent font-mono text-sm"
                                   placeholder="// Enter your code here..."
                                   x-bind:required="formData.type === 'code'">{{ $lesson->type === 'code' ? old('content', $lesson->content) : '' }}</textarea>
-                        
-                        <!-- Matter.js Physics Config -->
-                        <div class="mt-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Physics Configuration (Optional)</label>
-                            <textarea name="physics_config" 
-                                      rows="6"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent font-mono text-sm"
-                                      placeholder='{"gravity": {"x": 0, "y": 1}, "objects": []}'></textarea>
-                            <p class="text-sm text-gray-600">JSON configuration for Matter.js physics simulation</p>
-                        </div>
                     </div>
 
                     <!-- Text Content -->

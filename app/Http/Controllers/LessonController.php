@@ -73,7 +73,7 @@ class LessonController extends Controller
                 
                 // Content blocks
                 'content_blocks' => 'required|array|min:1',
-                'content_blocks.*.type' => 'required|in:text,youtube,vimeo,h5p,code,quiz',
+                'content_blocks.*.type' => 'required|in:text,youtube,vimeo,h5p,code,runnable_code,matter_js,quiz',
                 'content_blocks.*.content' => 'required|string',
                 'content_blocks.*.order' => 'nullable|integer',
                 'content_blocks.*.settings' => 'nullable|array',
@@ -182,9 +182,26 @@ class LessonController extends Controller
                 ];
                 break;
                 
+            case 'runnable_code':
+                $contentData = [
+                    'html_code' => substr($settings['html_code'] ?? '', 0, 50000),
+                    'css_code' => substr($settings['css_code'] ?? '', 0, 20000),
+                    'js_code' => substr($settings['js_code'] ?? '', 0, 20000),
+                    'description' => substr(strip_tags($settings['description'] ?? ''), 0, 1000)
+                ];
+                break;
+                
+            case 'matter_js':
+                $contentData = [
+                    'matter_js_code' => substr($settings['matter_js_code'] ?? '', 0, 10000),
+                    'width' => max(200, min(1200, (int)($settings['width'] ?? 800))),
+                    'height' => max(200, min(800, (int)($settings['height'] ?? 400)))
+                ];
+                break;
+                
             case 'text':
                 $contentData = [
-                    'content' => $blockData['content']
+                    'content' => substr($blockData['content'], 0, 100000)
                 ];
                 break;
                 

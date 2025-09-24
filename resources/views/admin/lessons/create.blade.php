@@ -309,16 +309,10 @@
                     <!-- Code/Matter.js Content -->
                     <div x-show="formData.type === 'code'">
                         <div class="space-y-4">
-                            <div>
-                                <label for="code_type" class="block text-sm font-medium text-gray-700 mb-2">Code Type</label>
-                                <select id="code_type" name="code_settings[type]" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                    <option value="matter_js">Matter.js Physics</option>
-                                    <option value="javascript">JavaScript</option>
-                                    <option value="html">HTML</option>
-                                    <option value="css">CSS</option>
-                                    <option value="python">Python</option>
-                                    <option value="other">Other</option>
-                                </select>
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <p class="text-yellow-800 text-sm">
+                                    <strong>Note:</strong> For runnable HTML/CSS/JS code with live preview, use the Multi-Content Lesson creator and add a "Runnable Code" block.
+                                </p>
                             </div>
                             <div>
                                 <label for="code_content" class="block text-sm font-medium text-gray-700 mb-2">Code Content *</label>
@@ -328,16 +322,6 @@
                                           x-model="formData.content"
                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono text-sm"
                                           placeholder="// Enter your code here..."></textarea>
-                            </div>
-                            <div x-show="formData.code_type === 'matter_js'" class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Canvas Width</label>
-                                    <input type="number" name="code_settings[width]" value="800" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Canvas Height</label>
-                                    <input type="number" name="code_settings[height]" value="600" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                </div>
                             </div>
                         </div>
                     </div>

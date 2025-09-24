@@ -20,6 +20,44 @@
             border-radius: 8px;
             background: #f9fafb;
         }
+        .runnable-code-lesson .tab-btn {
+            padding: 8px 16px;
+            margin-right: 8px;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .runnable-code-lesson .tab-btn.active {
+            background: #ffffff;
+            border-bottom: 1px solid #ffffff;
+            color: #1f2937;
+        }
+        .runnable-code-lesson .tab-content {
+            display: none;
+        }
+        .runnable-code-lesson .tab-content.active {
+            display: block;
+        }
+        .runnable-code-lesson .code-display {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 16px;
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .runnable-code-lesson .copy-btn:hover {
+            background: #2563eb;
+        }
+        .runnable-code-lesson .preview-container {
+            border: 1px solid #d1d5db;
+            border-radius: 0 0 8px 8px;
+            background: #ffffff;
+        }
     </style>
     @endpush
 
@@ -422,7 +460,66 @@
                 canvas.width = canvas.offsetWidth;
                 initPhysics();
             }
+            
+            // Initialize runnable code functionality
+            initRunnableCode();
         });
+        
+        // Runnable Code functionality
+        function initRunnableCode() {
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(tab + '-tab').classList.add('active');
+                });
+            });
+            
+            // Copy functionality
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetId = this.dataset.target;
+                    const codeElement = document.getElementById(targetId);
+                    const text = codeElement.textContent;
+                    
+                    navigator.clipboard.writeText(text).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = 'Copied!';
+                        this.classList.add('bg-green-500');
+                        this.classList.remove('bg-blue-500');
+                        
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                            this.classList.remove('bg-green-500');
+                            this.classList.add('bg-blue-500');
+                        }, 2000);
+                    });
+                });
+            });
+            
+            // Refresh preview
+            const refreshBtn = document.getElementById('refresh-preview');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    const iframe = document.getElementById('preview-frame');
+                    if (iframe) {
+                        // Reload the iframe by setting the srcdoc again
+                        const currentSrcdoc = iframe.getAttribute('srcdoc');
+                        iframe.setAttribute('srcdoc', '');
+                        setTimeout(() => {
+                            iframe.setAttribute('srcdoc', currentSrcdoc);
+                        }, 100);
+                    }
+                });
+            }
+        }
     </script>
     @endpush
 </x-app-layout>
