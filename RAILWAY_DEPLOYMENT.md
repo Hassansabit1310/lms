@@ -2,6 +2,18 @@
 
 ## 🚀 Quick Deployment Steps
 
+**CRITICAL:** Railway keeps using PHP 8.4 despite constraints. We now have two approaches:
+
+### Approach A: Docker (RECOMMENDED)
+Use the included `Dockerfile` which forces PHP 8.3:
+
+1. **Railway will auto-detect the Dockerfile**
+2. **Docker image uses PHP 8.3-cli specifically**
+3. **No version conflicts possible**
+
+### Approach B: Nixpacks (Alternative)
+Use the `nixpacks.toml` configuration.
+
 ### 1. **Environment Variables (Set in Railway Dashboard)**
 
 ```bash
