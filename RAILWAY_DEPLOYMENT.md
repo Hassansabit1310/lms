@@ -5,9 +5,6 @@
 ### 1. **Environment Variables (Set in Railway Dashboard)**
 
 ```bash
-# PHP Version (Important!)
-NIXPACKS_PHP_VERSION=8.0
-
 # Application
 APP_NAME="Laravel LMS"
 APP_ENV=production
@@ -54,11 +51,25 @@ Copy the output and set as `APP_KEY` in Railway.
 
 Railway will automatically:
 - ✅ **Detect Laravel app** (via `composer.json`)
-- ✅ **Install PHP 8.1** (via updated `composer.json` requirement)
+- ✅ **Choose compatible PHP version** (8.0, 8.1, or 8.2 based on availability)
 - ✅ **Install dependencies**: `composer install --no-dev --optimize-autoloader`
 - ✅ **Start server**: `php artisan serve --host=0.0.0.0 --port=$PORT`
 
-**No complex build configs needed!** Railway's auto-detection works perfectly.
+**Simplified approach:** No custom config files needed! Railway's auto-detection will choose the best available PHP version.
+
+### 4a. **Alternative: Manual Start Command**
+
+If auto-detection doesn't work, set this in Railway's service settings:
+
+**Start Command:**
+```
+php artisan serve --host=0.0.0.0 --port=$PORT
+```
+
+**Build Command (if needed):**
+```
+composer install --no-dev --optimize-autoloader
+```
 
 ### 5. **File Permissions**
 
