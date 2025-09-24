@@ -5,11 +5,12 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
-        "php": "^8.0.2|^8.1|^8.2|^8.3",
+        "php": ">=8.0 <8.4",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
+        "nunomaduro/collision": "^6.4",
         "spatie/laravel-permission": "^6.21"
     },  
     "require-dev": {
@@ -18,7 +19,6 @@
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.0.1",
         "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^6.4",
         "pestphp/pest": "^1.22",
         "pestphp/pest-plugin-laravel": "^1.2",
         "spatie/laravel-ignition": "^1.0"
