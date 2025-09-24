@@ -5,6 +5,9 @@
 ### 1. **Environment Variables (Set in Railway Dashboard)**
 
 ```bash
+# PHP Version (Important!)
+NIXPACKS_PHP_VERSION=8.0
+
 # Application
 APP_NAME="Laravel LMS"
 APP_ENV=production
