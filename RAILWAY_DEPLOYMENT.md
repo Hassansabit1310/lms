@@ -51,11 +51,11 @@ Copy the output and set as `APP_KEY` in Railway.
 
 Railway will automatically:
 - ✅ **Detect Laravel app** (via `composer.json`)
-- ✅ **Choose compatible PHP version** (8.0, 8.1, or 8.2 based on availability)
+- ✅ **Use PHP 8.0+** (requirement: `"php": ">=8.0"`)
 - ✅ **Install dependencies**: `composer install --no-dev --optimize-autoloader`
 - ✅ **Start server**: `php artisan serve --host=0.0.0.0 --port=$PORT`
 
-**Simplified approach:** No custom config files needed! Railway's auto-detection will choose the best available PHP version.
+**Latest changes:** Simplified PHP requirement to `>=8.0` for maximum compatibility.
 
 ### 4a. **Alternative: Manual Start Command**
 
