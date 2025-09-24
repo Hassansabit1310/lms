@@ -47,14 +47,15 @@ Copy the output and set as `APP_KEY` in Railway.
    php artisan migrate --force
    ```
 
-### 4. **Build & Deploy Commands**
+### 4. **Build & Deploy**
 
 Railway will automatically:
-- Install dependencies: `composer install --no-dev --optimize-autoloader`
-- Cache configuration: `php artisan config:cache`
-- Cache routes: `php artisan route:cache` 
-- Cache views: `php artisan view:cache`
-- Start server: `php artisan serve --host=0.0.0.0 --port=$PORT`
+- ✅ **Detect Laravel app** (via `composer.json`)
+- ✅ **Install PHP 8.1** (via updated `composer.json` requirement)
+- ✅ **Install dependencies**: `composer install --no-dev --optimize-autoloader`
+- ✅ **Start server**: `php artisan serve --host=0.0.0.0 --port=$PORT`
+
+**No complex build configs needed!** Railway's auto-detection works perfectly.
 
 ### 5. **File Permissions**
 
