@@ -5,6 +5,9 @@
 ### 1. **Environment Variables (Set in Railway Dashboard)**
 
 ```bash
+# PHP Version Control (Important!)
+NIXPACKS_PHP_VERSION=8.3
+
 # Application
 APP_NAME="Laravel LMS"
 APP_ENV=production
@@ -51,11 +54,11 @@ Copy the output and set as `APP_KEY` in Railway.
 
 Railway will automatically:
 - ✅ **Detect Laravel app** (via `composer.json`)
-- ✅ **Use PHP 8.0+** (requirement: `"php": ">=8.0"`)
+- ✅ **Use PHP 8.3** (constrained: `"php": ">=8.0 <8.4"`)
 - ✅ **Install dependencies**: `composer install --no-dev --optimize-autoloader`
 - ✅ **Start server**: `php artisan serve --host=0.0.0.0 --port=$PORT`
 
-**Latest changes:** Simplified PHP requirement to `>=8.0` for maximum compatibility.
+**Critical fix:** Railway was using PHP 8.4 which isn't supported by some dependencies. Now forced to use PHP 8.3.
 
 ### 4a. **Alternative: Manual Start Command**
 

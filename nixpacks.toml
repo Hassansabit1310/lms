@@ -1,0 +1,8 @@
+[variables]
+NIXPACKS_PHP_VERSION = "8.3"
+
+[phases.install]
+cmds = ["composer install --optimize-autoloader --no-dev"]
+
+[start]
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
