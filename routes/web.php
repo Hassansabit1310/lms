@@ -29,6 +29,11 @@ use App\Models\Course;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// CSS Debug route (temporary)
+Route::get('/css-debug', function() {
+    return view('css-debug');
+});
+
 // Vite asset serving for Railway (fallback)
 Route::get('/build/assets/{file}', function ($file) {
     $path = public_path('build/assets/' . $file);
