@@ -29,6 +29,40 @@ use App\Models\Course;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// DEBUG: Admin access checker (REMOVE AFTER FIXING)
+Route::get('/debug/admin-access', function() {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Not authenticated',
+            'login_url' => route('login')
+        ]);
+    }
+    
+    return response()->json([
+        'status' => 'success',
+        'user' => [
+            'id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'database_role' => $user->role,
+            'spatie_roles' => $user->getRoleNames()->toArray(),
+            'has_admin_role' => $user->hasRole('admin'),
+            'is_admin_method' => $user->isAdmin(),
+            'email_verified' => !is_null($user->email_verified_at),
+        ],
+        'middleware_requirements' => [
+            'auth' => true,
+            'verified' => !is_null($user->email_verified_at),
+            'role:admin' => $user->hasRole('admin'),
+        ],
+        'admin_dashboard_url' => route('admin.dashboard'),
+        'can_access_admin' => auth()->check() && $user->email_verified_at && $user->hasRole('admin'),
+    ]);
+})->middleware('auth')->name('debug.admin-access');
+
 // Vite asset serving for Railway (fallback)
 Route::get('/build/assets/{file}', function ($file) {
     $path = public_path('build/assets/' . $file);
