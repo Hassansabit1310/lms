@@ -18,10 +18,10 @@
             }
         @endphp
         @if(isset($cssFile))
-            <link rel="stylesheet" href="{{ asset('build/' . $cssFile) }}">
+            <link rel="stylesheet" href="{{ secure_asset('build/' . $cssFile) }}">
         @endif
         @if(isset($jsFile))
-            <script type="module" src="{{ asset('build/' . $jsFile) }}"></script>
+            <script type="module" src="{{ secure_asset('build/' . $jsFile) }}"></script>
         @endif
     @else
         {{-- Development: Use Vite --}}

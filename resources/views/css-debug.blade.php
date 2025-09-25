@@ -65,25 +65,26 @@
     </div>
 
     <div class="debug-section">
-        <h3>Generated Vite URLs</h3>
+        <h3>Generated URLs Test</h3>
         <div class="code">
             @php
-                // Get what Vite would generate
-                try {
-                    $viteAssets = app(\Illuminate\Foundation\Vite::class);
-                    $cssUrl = '';
-                    $jsUrl = '';
+                if($manifestExists && isset($manifest['resources/css/app.css'])) {
+                    $cssFile = $manifest['resources/css/app.css']['file'];
+                    $jsFile = $manifest['resources/js/app.js']['file'];
                     
-                    if($manifestExists && isset($manifest['resources/css/app.css'])) {
-                        $cssUrl = asset('build/' . $manifest['resources/css/app.css']['file']);
-                        $jsUrl = asset('build/' . $manifest['resources/js/app.js']['file']);
-                    }
-                } catch (Exception $e) {
-                    $cssUrl = 'Error: ' . $e->getMessage();
+                    $assetUrl = asset('build/' . $cssFile);
+                    $secureAssetUrl = secure_asset('build/' . $cssFile);
+                    $directUrl = config('app.url') . '/build/' . $cssFile;
                 }
             @endphp
-            Expected CSS URL: {{ $cssUrl }}<br>
-            Expected JS URL: {{ $jsUrl }}
+            @if(isset($cssFile))
+                asset() URL: {{ $assetUrl }}<br>
+                secure_asset() URL: {{ $secureAssetUrl }}<br>
+                Direct URL: {{ $directUrl }}<br>
+                config('app.url'): {{ config('app.url') }}<br>
+                Request scheme: {{ request()->getScheme() }}<br>
+                Request host: {{ request()->getHost() }}
+            @endif
         </div>
     </div>
 
