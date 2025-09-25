@@ -8,44 +8,69 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- Fallback Tailwind CSS for production issues -->
+    <!-- Enhanced CSS Loading Detection -->
     <script>
         // Check if Tailwind styles are loaded by testing a common class
         document.addEventListener('DOMContentLoaded', function() {
-            const testEl = document.createElement('div');
-            testEl.className = 'bg-blue-500';
-            testEl.style.position = 'absolute';
-            testEl.style.visibility = 'hidden';
-            document.body.appendChild(testEl);
-            
-            const computedStyle = window.getComputedStyle(testEl);
-            const bgColor = computedStyle.backgroundColor;
-            
-            // If Tailwind isn't loaded (bg-blue-500 should be blue)
-            if (!bgColor || bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
-                console.warn('Tailwind CSS not loaded, adding fallback CSS');
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = '/fallback-tailwind.css';
-                document.head.appendChild(link);
+            setTimeout(() => {
+                const testEl = document.createElement('div');
+                testEl.className = 'bg-blue-500 text-white p-4';
+                testEl.style.position = 'absolute';
+                testEl.style.visibility = 'hidden';
+                testEl.style.left = '-9999px';
+                document.body.appendChild(testEl);
                 
-                // Add a visual indicator in development
-                setTimeout(() => {
-                    const indicator = document.createElement('div');
-                    indicator.innerHTML = '⚠️ Using Fallback CSS';
-                    indicator.style.cssText = `
-                        position: fixed; top: 10px; right: 10px; 
-                        background: #ef4444; color: white; 
-                        padding: 8px 12px; border-radius: 6px; 
-                        font-size: 12px; z-index: 9999;
-                        font-family: monospace;
-                    `;
-                    document.body.appendChild(indicator);
-                    setTimeout(() => indicator.remove(), 10000);
-                }, 500);
-            }
-            
-            document.body.removeChild(testEl);
+                const computedStyle = window.getComputedStyle(testEl);
+                const bgColor = computedStyle.backgroundColor;
+                const padding = computedStyle.padding;
+                
+                // Check multiple indicators that Tailwind is loaded
+                const isTailwindLoaded = (
+                    bgColor && 
+                    bgColor !== 'rgba(0, 0, 0, 0)' && 
+                    bgColor !== 'transparent' &&
+                    (bgColor.includes('59, 130, 246') || bgColor.includes('#3b82f6')) &&
+                    padding && padding !== '0px'
+                );
+                
+                console.log('CSS Debug:', {
+                    bgColor: bgColor,
+                    padding: padding,
+                    tailwindLoaded: isTailwindLoaded
+                });
+                
+                if (!isTailwindLoaded) {
+                    console.warn('🚨 Main Tailwind CSS not loaded, adding fallback CSS');
+                    
+                    // Load fallback CSS
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = '/fallback-tailwind.css';
+                    link.onload = () => console.log('✅ Fallback CSS loaded successfully');
+                    link.onerror = () => console.error('❌ Failed to load fallback CSS');
+                    document.head.appendChild(link);
+                    
+                    // Add visual indicator
+                    setTimeout(() => {
+                        const indicator = document.createElement('div');
+                        indicator.innerHTML = '⚠️ Using Fallback CSS - Check Railway build logs';
+                        indicator.style.cssText = `
+                            position: fixed; top: 10px; right: 10px; 
+                            background: #ef4444; color: white; 
+                            padding: 8px 12px; border-radius: 6px; 
+                            font-size: 12px; z-index: 9999;
+                            font-family: monospace; cursor: pointer;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                        `;
+                        indicator.onclick = () => indicator.remove();
+                        document.body.appendChild(indicator);
+                    }, 500);
+                } else {
+                    console.log('✅ Main Tailwind CSS loaded successfully');
+                }
+                
+                document.body.removeChild(testEl);
+            }, 1000); // Wait 1 second for CSS to load
         });
     </script>
     <style>

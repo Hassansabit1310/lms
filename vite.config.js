@@ -11,4 +11,20 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        manifest: true,
+        outDir: 'public/build',
+        rollupOptions: {
+            output: {
+                manualChunks: undefined,
+            },
+        },
+    },
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });

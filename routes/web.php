@@ -29,6 +29,29 @@ use App\Models\Course;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// Vite asset serving for Railway (fallback)
+Route::get('/build/assets/{file}', function ($file) {
+    $path = public_path('build/assets/' . $file);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    $extension = pathinfo($file, PATHINFO_EXTENSION);
+    $mimeTypes = [
+        'css' => 'text/css',
+        'js' => 'application/javascript',
+        'woff' => 'font/woff',
+        'woff2' => 'font/woff2',
+    ];
+    
+    $mimeType = $mimeTypes[$extension] ?? 'text/plain';
+    
+    return response()->file($path, [
+        'Content-Type' => $mimeType,
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->where('file', '.*');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

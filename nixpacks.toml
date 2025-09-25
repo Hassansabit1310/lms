@@ -1,6 +1,8 @@
 [variables]
 NIXPACKS_PHP_VERSION = "8.3"
 NODE_ENV = "production"
+APP_ENV = "production"
+ASSET_URL = ""
 
 [phases.setup]
 nixPkgs = ["php83", "php83Packages.composer", "nodejs_18", "npm-9_x"]
@@ -31,4 +33,4 @@ cmds = [
 ]
 
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT --public=/app/public"
