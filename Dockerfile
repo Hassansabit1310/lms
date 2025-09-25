@@ -35,7 +35,7 @@ WORKDIR /var/www/html
 
 COPY . .
 
-EXPOSE 8000
+EXPOSE $PORT
 
 RUN composer install
 RUN npm install
@@ -43,4 +43,4 @@ RUN npm install
 
 
 # Start Laravel development server
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
