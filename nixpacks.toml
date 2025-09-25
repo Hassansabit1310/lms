@@ -1,5 +1,6 @@
 [variables]
 NIXPACKS_PHP_VERSION = "8.3"
+NODE_ENV = "production"
 
 [phases.setup]
 nixPkgs = ["php83", "php83Packages.composer", "nodejs_18", "npm-9_x"]
@@ -15,7 +16,11 @@ cmds = [
 
 [phases.build]
 cmds = [
+  "echo 'Building frontend assets...'",
+  "ls -la package.json vite.config.js tailwind.config.js",
   "npm run build",
+  "echo 'Checking built assets...'",
+  "ls -la public/build/",
   "php artisan config:cache",
   "php artisan route:cache", 
   "php artisan view:cache"
