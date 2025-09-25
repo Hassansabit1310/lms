@@ -13,7 +13,22 @@
     <link rel="stylesheet" href="https://h5p.org/sites/all/modules/h5p/library/styles/h5p-core-button.css">
     
     <!-- Tailwind CSS for basic styling -->
-    @vite(['resources/css/app.css'])
+    @if(app()->environment('production'))
+        {{-- Production: Use manifest to load assets directly --}}
+        @php
+            $manifestPath = public_path('build/manifest.json');
+            if (file_exists($manifestPath)) {
+                $manifest = json_decode(file_get_contents($manifestPath), true);
+                $cssFile = $manifest['resources/css/app.css']['file'] ?? null;
+            }
+        @endphp
+        @if(isset($cssFile))
+            <link rel="stylesheet" href="{{ secure_asset('build/' . $cssFile) }}">
+        @endif
+    @else
+        {{-- Development: Use Vite --}}
+        @vite(['resources/css/app.css'])
+    @endif
     
     <style>
         body {
