@@ -16,16 +16,20 @@ return new class extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->enum('type', ['monthly', 'annual'])->default('monthly');
+            $table->enum('plan_type', ['monthly', 'annual'])->default('monthly');
             $table->decimal('amount', 10, 2);
             $table->timestamp('start_date');
             $table->timestamp('end_date');
-            $table->enum('status', ['active', 'cancelled', 'expired'])->default('active');
+            $table->enum('status', ['active', 'inactive', 'cancelled', 'expired'])->default('active');
+            $table->string('gateway')->default('sslcommerz');
+            $table->string('subscription_id')->nullable(); // Gateway subscription ID
+            $table->json('gateway_response')->nullable();
             $table->timestamps();
             
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->index(['user_id', 'status']);
             $table->index(['end_date']);
+            $table->index(['plan_type']);
         });
     }
 
