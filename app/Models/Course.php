@@ -169,6 +169,43 @@ class Course extends Model
     }
 
     /**
+     * Scope for featured courses (optimized for homepage)
+     */
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true)->where('status', 'published');
+    }
+
+    /**
+     * Scope for recent courses (optimized with index)
+     */
+    public function scopeRecent($query, $limit = 6)
+    {
+        return $query->where('status', 'published')
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit);
+    }
+
+    /**
+     * Scope for popular courses (by enrollment count)
+     */
+    public function scopePopular($query, $limit = 6)
+    {
+        return $query->where('status', 'published')
+                    ->withCount('enrollments')
+                    ->orderBy('enrollments_count', 'desc')
+                    ->limit($limit);
+    }
+
+    /**
+     * Scope for courses by category (optimized)
+     */
+    public function scopeByCategory($query, $categoryId)
+    {
+        return $query->where('category_id', $categoryId)->where('status', 'published');
+    }
+
+    /**
      * Scope for free courses
      */
     public function scopeFree($query)
@@ -182,6 +219,18 @@ class Course extends Model
     public function scopePaid($query)
     {
         return $query->where('is_free', false);
+    }
+
+    /**
+     * Scope for minimal data (homepage optimization)
+     */
+    public function scopeMinimal($query)
+    {
+        return $query->select([
+            'id', 'title', 'slug', 'short_description', 
+            'thumbnail', 'price', 'is_free', 'category_id', 
+            'created_at', 'status'
+        ]);
     }
 
     /**

@@ -6,40 +6,58 @@ use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\Bundle;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        // Simplified version to avoid database issues during initial setup
-        $featuredCourses = Course::with(['category', 'reviews'])
-            ->orderBy('created_at', 'desc')
-            ->limit(6)
-            ->get();
+        // Cache homepage data for 10 minutes to improve performance
+        $featuredCourses = Cache::remember('homepage.featured_courses', 600, function () {
+            return Course::select(['id', 'title', 'slug', 'short_description', 'thumbnail', 'price', 'is_free', 'category_id', 'created_at'])
+                ->with(['category:id,name,slug'])
+                ->where('status', 'published')
+                ->orderBy('created_at', 'desc')
+                ->limit(6)
+                ->get();
+        });
 
-        $categories = Category::whereNull('parent_id')
-            ->limit(8)
-            ->get();
+        $categories = Cache::remember('homepage.categories', 1800, function () {
+            return Category::select(['id', 'name', 'slug', 'icon', 'color'])
+                ->whereNull('parent_id')
+                ->orderBy('id')
+                ->limit(8)
+                ->get();
+        });
 
-        // Get featured bundles for homepage
-        $featuredBundles = Bundle::featured()
-            ->available()
-            ->with(['courses' => function($query) {
-                $query->where('courses.status', 'published')
-                      ->orderBy('bundle_courses.order')
-                      ->limit(3); // Show only first 3 courses in the preview
-            }])
-            ->orderBy('created_at', 'desc')
-            ->limit(3)
-            ->get();
+        $featuredBundles = Cache::remember('homepage.featured_bundles', 600, function () {
+            // Check if Bundle model exists and has the methods
+            if (!class_exists(Bundle::class)) {
+                return collect([]);
+            }
+            
+            try {
+                return Bundle::select(['id', 'name', 'slug', 'description', 'price', 'original_price', 'created_at'])
+                    ->where('is_active', true)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(3)
+                    ->get();
+            } catch (\Exception $e) {
+                // Return empty collection if Bundle queries fail
+                return collect([]);
+            }
+        });
 
-        $stats = [
-            'total_courses' => Course::count(),
-            'total_students' => \App\Models\User::where('role', 'student')->count(),
-            'total_instructors' => \App\Models\User::where('role', 'instructor')->count(),
-            'total_enrollments' => \App\Models\Enrollment::count(),
-            'total_bundles' => Bundle::active()->count(),
-        ];
+        // Cache stats for 30 minutes since they don't change frequently
+        $stats = Cache::remember('homepage.stats', 1800, function () {
+            return [
+                'total_courses' => Course::where('status', 'published')->count(),
+                'total_students' => \App\Models\User::where('role', 'student')->count(),
+                'total_instructors' => \App\Models\User::where('role', 'instructor')->count(),
+                'total_enrollments' => \App\Models\Enrollment::count(),
+                'total_bundles' => class_exists(Bundle::class) ? Bundle::where('is_active', true)->count() : 0,
+            ];
+        });
 
         return view('home', compact('featuredCourses', 'categories', 'featuredBundles', 'stats'));
     }

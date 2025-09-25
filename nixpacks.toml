@@ -18,18 +18,14 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "echo 'Checking for existing build assets...'",
-  "ls -la public/build/ || echo 'No existing build directory'",
-  "if [ ! -d 'public/build' ]; then echo 'Building frontend assets...'; ls -la package.json vite.config.js tailwind.config.js resources/css/app.css; npm run build; else echo 'Using committed build assets'; fi",
-  "echo 'Final asset check...'",
-  "ls -la public/build/",
-  "ls -la public/build/assets/",
-  "echo 'CSS file size:'",
-  "wc -c public/build/assets/*.css",
+  "echo 'Building frontend assets...'",
+  "if [ ! -d 'public/build' ]; then npm run build; else echo 'Using committed build assets'; fi",
   "echo 'Laravel optimizations...'",
   "php artisan config:cache",
   "php artisan route:cache", 
-  "php artisan view:cache"
+  "php artisan view:cache",
+  "php artisan optimize",
+  "echo 'Performance optimizations complete'"
 ]
 
 [start]
