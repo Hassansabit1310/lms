@@ -5,38 +5,42 @@ FROM php:8.3-cli
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    unzip \
+    zip \
+    libzip-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    libsodium-dev \
+    libpq-dev \
+    default-mysql-client \
+    default-libmysqlclient-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip sodium
+
+
+    
+
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get update && apt-get install -y nodejs
+
 # Set working directory
-WORKDIR /app
+WORKDIR /var/www/html 
 
-# Copy composer files first for better caching
-COPY composer.json composer.lock ./
-
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
-
-# Copy application files
 COPY . .
 
-# Set permissions
-RUN chmod -R 755 storage bootstrap/cache
+EXPOSE 8000
 
-# Cache Laravel configuration
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+RUN composer install
+RUN npm install
 
-# Expose port (Railway will set $PORT)
-EXPOSE $PORT
+
 
 # Start Laravel development server
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
