@@ -8,6 +8,46 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Fallback Tailwind CSS for production issues -->
+    <script>
+        // Check if Tailwind styles are loaded by testing a common class
+        document.addEventListener('DOMContentLoaded', function() {
+            const testEl = document.createElement('div');
+            testEl.className = 'bg-blue-500';
+            testEl.style.position = 'absolute';
+            testEl.style.visibility = 'hidden';
+            document.body.appendChild(testEl);
+            
+            const computedStyle = window.getComputedStyle(testEl);
+            const bgColor = computedStyle.backgroundColor;
+            
+            // If Tailwind isn't loaded (bg-blue-500 should be blue)
+            if (!bgColor || bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
+                console.warn('Tailwind CSS not loaded, adding fallback CSS');
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '/fallback-tailwind.css';
+                document.head.appendChild(link);
+                
+                // Add a visual indicator in development
+                setTimeout(() => {
+                    const indicator = document.createElement('div');
+                    indicator.innerHTML = '⚠️ Using Fallback CSS';
+                    indicator.style.cssText = `
+                        position: fixed; top: 10px; right: 10px; 
+                        background: #ef4444; color: white; 
+                        padding: 8px 12px; border-radius: 6px; 
+                        font-size: 12px; z-index: 9999;
+                        font-family: monospace;
+                    `;
+                    document.body.appendChild(indicator);
+                    setTimeout(() => indicator.remove(), 10000);
+                }, 500);
+            }
+            
+            document.body.removeChild(testEl);
+        });
+    </script>
     <style>
         .hero-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;

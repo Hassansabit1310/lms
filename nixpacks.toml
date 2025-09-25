@@ -17,10 +17,14 @@ cmds = [
 [phases.build]
 cmds = [
   "echo 'Building frontend assets...'",
-  "ls -la package.json vite.config.js tailwind.config.js",
+  "ls -la package.json vite.config.js tailwind.config.js resources/css/app.css",
   "npm run build",
   "echo 'Checking built assets...'",
   "ls -la public/build/",
+  "ls -la public/build/assets/",
+  "echo 'CSS file size:'",
+  "wc -c public/build/assets/*.css",
+  "echo 'Laravel optimizations...'",
   "php artisan config:cache",
   "php artisan route:cache", 
   "php artisan view:cache"
