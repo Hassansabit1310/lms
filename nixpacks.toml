@@ -28,5 +28,16 @@ cmds = [
   "echo 'Performance optimizations complete'"
 ]
 
+[phases.deploy]
+cmds = [
+  "echo 'Running database migrations...'",
+  "php artisan migrate --force",
+  "echo 'Fixing admin access for common admin emails...'",
+  "php artisan admin:fix-access admin@lms.test || echo 'Admin fix failed for admin@lms.test'",
+  "php artisan admin:fix-access hsabit.iiuc@gmail.com || echo 'Admin fix failed for hsabit.iiuc@gmail.com'",
+  "php artisan admin:fix-access sabit.hassan75@gmail.com || echo 'Admin fix failed for sabit.hassan75@gmail.com'",
+  "echo 'Admin access fix completed'"
+]
+
 [start]
 cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
