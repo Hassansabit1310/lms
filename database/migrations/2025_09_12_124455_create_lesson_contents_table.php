@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('lesson_contents', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('lesson_id');
-            $table->enum('content_type', ['h5p', 'matter_js', 'interactive', 'quiz', 'assessment', 'video', 'text', 'code']);
+            $table->enum('content_type', ['h5p', 'matter_js', 'interactive', 'quiz', 'assessment', 'video', 'text', 'code', 'runnable_code']);
             $table->json('content_data'); // Stores flexible content configuration
             $table->json('settings')->nullable(); // H5P settings, Matter.js configurations, etc.
             $table->string('h5p_content_id')->nullable(); // For H5P integration
