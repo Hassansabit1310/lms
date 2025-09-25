@@ -1,4 +1,20 @@
-# Use PHP 8.3 specifically for Railway deployment
+# Stage 1: Frontend build with Node
+FROM node:20 AS frontend
+
+WORKDIR /app
+
+# Install frontend deps
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy all app files (for vite build)
+COPY . .
+
+# Build assets for production (creates public/build)
+RUN npm run build
+
+
+# Stage 2: Laravel backend with PHP
 FROM php:8.3-cli
 
 # Install system dependencies
@@ -20,30 +36,23 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip sodium
 
-
-    
-
-
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get update && apt-get install -y nodejs
-
 # Set working directory
-WORKDIR /var/www/html 
+WORKDIR /var/www/html
 
+# Copy Laravel app files
 COPY . .
 
-# Copy built frontend assets from Node stage
+# Copy built assets from Node stage
 COPY --from=frontend /app/public/build ./public/build
 
+# Install PHP dependencies (optimized for prod)
+RUN composer install --no-dev --optimize-autoloader
+
+# Expose Railway’s dynamic port
 EXPOSE $PORT
 
-RUN composer install
-RUN npm install
-
-
-
-# Start Laravel development server
+# Start Laravel app (with migrations)
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
