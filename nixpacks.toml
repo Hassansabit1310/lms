@@ -33,4 +33,4 @@ cmds = [
 ]
 
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=$PORT --public=/app/public"
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
