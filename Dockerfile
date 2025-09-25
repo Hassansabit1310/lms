@@ -35,6 +35,9 @@ WORKDIR /var/www/html
 
 COPY . .
 
+# Copy built frontend assets from Node stage
+COPY --from=frontend /app/public/build ./public/build
+
 EXPOSE $PORT
 
 RUN composer install
