@@ -18,10 +18,10 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "echo 'Building frontend assets...'",
-  "ls -la package.json vite.config.js tailwind.config.js resources/css/app.css",
-  "npm run build",
-  "echo 'Checking built assets...'",
+  "echo 'Checking for existing build assets...'",
+  "ls -la public/build/ || echo 'No existing build directory'",
+  "if [ ! -d 'public/build' ]; then echo 'Building frontend assets...'; ls -la package.json vite.config.js tailwind.config.js resources/css/app.css; npm run build; else echo 'Using committed build assets'; fi",
+  "echo 'Final asset check...'",
   "ls -la public/build/",
   "ls -la public/build/assets/",
   "echo 'CSS file size:'",
