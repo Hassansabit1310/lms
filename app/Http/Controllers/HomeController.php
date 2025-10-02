@@ -48,6 +48,8 @@ class HomeController extends Controller
                 ->get();
         });
 
+        
+
         $featuredBundles = Cache::remember('homepage.featured_bundles', 600, function () {
             // Check if Bundle model exists and has the methods
             if (!class_exists(Bundle::class)) {
