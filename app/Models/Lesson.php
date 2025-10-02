@@ -67,7 +67,6 @@ class Lesson extends Model
         'is_free',
         'status',
         'order',
-        'sort_orders',
         'duration_minutes',
     ];
 
@@ -75,7 +74,6 @@ class Lesson extends Model
         'course_id' => 'integer',
         'is_free' => 'boolean',
         'order' => 'integer',
-        'sort_orders' => 'integer',
         'duration_minutes' => 'integer',
         'video_duration' => 'integer',
     ];
