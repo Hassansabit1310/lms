@@ -5,7 +5,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-3xl font-bold text-white mb-2">
-                            ✅ Create Multi-Content Lesson (FIXED)
+                            ✅ Edit Multi-Content Lesson
                         </h2>
                         <p class="text-white/90 text-lg">Course: {{ $course->title }}</p>
                     </div>
@@ -45,8 +45,9 @@
                 </div>
             @endif
 
-            <form action="{{ route('admin.courses.lessons.store', $course) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.courses.lessons.update', [$course, $lesson]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
+                @method('PATCH')
                 
                 <!-- Lesson Basic Information -->
                 <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
@@ -58,7 +59,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Lesson Title *</label>
                             <input type="text" 
                                    name="title" 
-                                   value="{{ old('title') }}"
+                                   value="{{ old('title', $lesson->title) }}"
                                    required 
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                    placeholder="Enter a clear, descriptive lesson title...">
@@ -70,7 +71,7 @@
                             <textarea name="description" 
                                       rows="3"
                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                      placeholder="Describe what students will learn in this lesson...">{{ old('description') }}</textarea>
+                                      placeholder="Describe what students will learn in this lesson...">{{ old('description', $lesson->description) }}</textarea>
                         </div>
 
                         <!-- Order -->
@@ -78,7 +79,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Lesson Order</label>
                             <input type="number" 
                                    name="order" 
-                                   value="{{ old('order', $nextOrder) }}"
+                                   value="{{ old('order', $lesson->order) }}"
                                    min="1"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
@@ -88,7 +89,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
                             <input type="number" 
                                    name="duration_minutes" 
-                                   value="{{ old('duration_minutes') }}"
+                                   value="{{ old('duration_minutes', $lesson->duration_minutes) }}"
                                    min="0"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                    placeholder="e.g., 15">
@@ -122,7 +123,103 @@
 
                     <!-- Content Blocks Container -->
                     <div id="contentBlocksContainer" class="space-y-6">
-                        <!-- Initial Content Block -->
+                    <!-- Existing Content Blocks -->
+                    @forelse($lesson->contents as $index => $content)
+                    <div class="content-block border border-gray-200 rounded-lg p-6 bg-gray-50">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span class="text-blue-600 font-semibold text-sm block-number">{{ $index + 1 }}</span>
+                                </div>
+                                <h3 class="font-semibold text-gray-900">Content Block</h3>
+                                <select onchange="switchContentType(this, {{ $index }})"
+                                        class="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500">
+                                    <option value="youtube" {{ $content->type === 'youtube' ? 'selected' : '' }}>📺 YouTube Video</option>
+                                    <option value="vimeo" {{ $content->type === 'vimeo' ? 'selected' : '' }}>🎬 Vimeo Video</option>
+                                    <option value="text" {{ $content->type === 'text' ? 'selected' : '' }}>📝 Text Content</option>
+                                    <option value="h5p" {{ $content->type === 'h5p' ? 'selected' : '' }}>🧩 H5P Interactive</option>
+                                    <option value="code" {{ $content->type === 'code' ? 'selected' : '' }}>💻 Code Example</option>
+                                    <option value="runnable_code" {{ $content->type === 'runnable_code' ? 'selected' : '' }}>🚀 Runnable Code</option>
+                                    <option value="matter_js" {{ $content->type === 'matter_js' ? 'selected' : '' }}>⚛️ Matter.js Physics</option>
+                                    <option value="quiz" {{ $content->type === 'quiz' ? 'selected' : '' }}>❓ Quiz</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button"
+                                        onclick="removeContentBlock(this)"
+                                        class="text-red-500 hover:text-red-700 p-1 remove-btn" style="{{ count($lesson->contents) > 1 ? '' : 'display: none;' }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields -->
+                        <input type="hidden" name="content_blocks[{{ $index }}][id]" value="{{ $content->id }}">
+                        <input type="hidden" name="content_blocks[{{ $index }}][type]" value="{{ $content->type }}" class="block-type">
+                        <input type="hidden" name="content_blocks[{{ $index }}][order]" value="{{ $content->order }}" class="block-order">
+
+                        <!-- Content Input -->
+                        <div class="content-input">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="content-label">
+                                    @switch($content->type)
+                                        @case('youtube') YouTube URL @break
+                                        @case('vimeo') Vimeo URL @break
+                                        @case('text') Text Content @break
+                                        @case('h5p') H5P Content @break
+                                        @case('code') Code Example @break
+                                        @case('runnable_code') Runnable Code @break
+                                        @case('matter_js') Matter.js Code @break
+                                        @case('quiz') Quiz Content @break
+                                        @default Content @break
+                                    @endswitch
+                                </span> *
+                            </label>
+                            @if($content->type === 'text')
+                                <textarea name="content_blocks[{{ $index }}][content]"
+                                          required
+                                          rows="6"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                          placeholder="Enter your text content here...">{{ old("content_blocks.{$index}.content", $content->content) }}</textarea>
+                            @elseif(in_array($content->type, ['code', 'runnable_code', 'matter_js']))
+                                <textarea name="content_blocks[{{ $index }}][content]"
+                                          required
+                                          rows="10"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                          placeholder="Enter your code here...">{{ old("content_blocks.{$index}.content", $content->content) }}</textarea>
+                            @elseif($content->type === 'quiz')
+                                @php
+                                    $currentQuizData = is_string($content->content) ? json_decode($content->content, true) : $content->content;
+                                    $currentQuizId = $currentQuizData['quiz_id'] ?? '';
+                                @endphp
+                                <select name="content_blocks[{{ $index }}][content]" 
+                                        required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select a Quiz</option>
+                                    @foreach(\App\Models\Quiz::where('is_active', true)->get() as $quiz)
+                                        <option value="{{ json_encode(['quiz_id' => $quiz->id, 'title' => $quiz->title]) }}" 
+                                                {{ $currentQuizId == $quiz->id ? 'selected' : '' }}>
+                                            {{ $quiz->title }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input type="{{ in_array($content->type, ['youtube', 'vimeo']) ? 'url' : 'text' }}"
+                                       name="content_blocks[{{ $index }}][content]"
+                                       value="{{ old("content_blocks.{$index}.content", $content->content) }}"
+                                       required
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                       placeholder="@switch($content->type)
+                                           @case('youtube') https://www.youtube.com/watch?v=... @break
+                                           @case('vimeo') https://vimeo.com/... @break
+                                           @case('h5p') H5P content identifier @break
+                                           @default Enter content @break
+                                       @endswitch">
+                            @endif
+                        </div>
+                    </div>
+                    @empty
+                    <!-- Default Content Block if no existing content -->
                         <div class="content-block border border-gray-200 rounded-lg p-6 bg-gray-50">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center space-x-3">
@@ -167,6 +264,7 @@
                                        placeholder="https://www.youtube.com/watch?v=...">
                             </div>
                         </div>
+                    @endforelse
                     </div>
 
                     <!-- Content Guidelines -->
@@ -202,7 +300,7 @@
                         
                         <button type="submit" 
                                 class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
-                            <i class="fas fa-save mr-2"></i>Create Lesson
+                            <i class="fas fa-save mr-2"></i>Update Lesson
                         </button>
                     </div>
                 </div>
@@ -212,7 +310,7 @@
 
     @push('scripts')
     <script>
-        let blockCounter = 1;
+        let blockCounter = {{ count($lesson->contents) > 0 ? count($lesson->contents) : 1 }};
 
         function addContentBlock() {
             const container = document.getElementById('contentBlocksContainer');
@@ -816,9 +914,27 @@ Matter.World.add(currentEngine.world, [ground, ...balls]);"></textarea>
             }
         });
 
+        // Initialize existing content blocks
+        function initializeExistingBlocks() {
+            const existingBlocks = document.querySelectorAll('.content-block');
+            existingBlocks.forEach((block, index) => {
+                const select = block.querySelector('select[onchange*="switchContentType"]');
+                const typeInput = block.querySelector('.block-type');
+                
+                if (select && typeInput) {
+                    // Make sure the hidden type field matches the select value
+                    typeInput.value = select.value;
+                    
+                    // Update the onchange attribute to use the correct index
+                    select.setAttribute('onchange', `switchContentType(this, ${index})`);
+                }
+            });
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateRemoveButtons();
+            initializeExistingBlocks();
         });
     </script>
     @endpush

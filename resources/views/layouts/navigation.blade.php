@@ -86,6 +86,9 @@
                             <x-dropdown-link :href="route('admin.h5p.index')">
                                 🧩 H5P Content
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.quizzes.index')">
+                                ❓ Quiz Management
+                            </x-dropdown-link>
                         @endif
 
                         <!-- Authentication -->

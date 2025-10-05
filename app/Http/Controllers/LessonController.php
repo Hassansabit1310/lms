@@ -288,7 +288,7 @@ class LessonController extends Controller
     }
 
     /**
-     * Show the form for editing the specified lesson
+     * Show the form for editing the specified lesson (with course context)
      */
     public function edit(Course $course, Lesson $lesson): View
     {
@@ -296,24 +296,39 @@ class LessonController extends Controller
         
         $lesson->load(['contents', 'quizzes']);
         
-        return view('admin.lessons.edit', compact('course', 'lesson'));
+        return view('admin.lessons.edit-multi', compact('course', 'lesson'));
     }
 
     /**
-     * Update the specified lesson in storage
+     * Show the form for editing the specified lesson (shallow route)
+     */
+    public function editShallow(Lesson $lesson): View
+    {
+        // Authorization handled by role:admin middleware
+        
+        $lesson->load(['contents', 'quizzes', 'course']);
+        $course = $lesson->course;
+        
+        return view('admin.lessons.edit-multi', compact('course', 'lesson'));
+    }
+
+    /**
+     * Update the specified lesson in storage (with course context)
      */
     public function update(Request $request, Course $course, Lesson $lesson): RedirectResponse
     {
         // Authorization handled by role:admin middleware
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:text,youtube,vimeo,h5p,code,pdf,quiz',
-            'content' => 'required|string',
-            'is_free' => 'boolean',
             'duration_minutes' => 'nullable|integer|min:0',
             'order' => 'nullable|integer|min:1',
+            'content_blocks' => 'required|array|min:1',
+            'content_blocks.*.type' => 'required|string|in:text,youtube,vimeo,h5p,code,runnable_code,matter_js,quiz',
+            'content_blocks.*.content' => 'required|string',
+            'content_blocks.*.order' => 'required|integer|min:1',
+            'content_blocks.*.id' => 'nullable|integer|exists:lesson_contents,id',
         ]);
 
         // Update slug if title changed
@@ -321,17 +336,209 @@ class LessonController extends Controller
             $baseSlug = Str::slug($validated['title']);
             $slug = $baseSlug;
             $counter = 1;
-            
+
             while ($course->lessons()->where('slug', $slug)->where('id', '!=', $lesson->id)->exists()) {
                 $slug = $baseSlug . '-' . $counter;
                 $counter++;
             }
-            
+
             $validated['slug'] = $slug;
         }
 
-        // Update the lesson
-        $lesson->update($validated);
+        // Update lesson basic information
+        $lesson->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'duration_minutes' => $validated['duration_minutes'],
+            'order' => $validated['order'],
+            'slug' => $validated['slug'] ?? $lesson->slug,
+            'type' => 'text', // Set default type for multi-content lessons
+            'content' => 'Multi-content lesson - see content blocks',
+        ]);
+
+        // Handle content blocks
+        $existingContentIds = [];
+        
+        foreach ($validated['content_blocks'] as $index => $blockData) {
+            $contentData = [
+                'lesson_id' => $lesson->id,
+                'content_type' => $blockData['type'],
+                'order' => $blockData['order'],
+                'is_active' => true,
+            ];
+
+            // Handle different content types
+            switch ($blockData['type']) {
+                case 'youtube':
+                case 'vimeo':
+                    $contentData['content_data'] = [
+                        'url' => $blockData['content'],
+                        'video_type' => $blockData['type']
+                    ];
+                    break;
+                case 'text':
+                    $contentData['content_data'] = [
+                        'content' => $blockData['content']
+                    ];
+                    break;
+                case 'code':
+                case 'runnable_code':
+                    $contentData['content_data'] = [
+                        'code' => $blockData['content']
+                    ];
+                    break;
+                case 'matter_js':
+                    $contentData['content_data'] = [
+                        'matter_js_code' => $blockData['content']
+                    ];
+                    $contentData['matter_js_code'] = $blockData['content'];
+                    break;
+                case 'h5p':
+                    $contentData['content_data'] = [
+                        'h5p_id' => $blockData['content']
+                    ];
+                    $contentData['h5p_content_id'] = $blockData['content'];
+                    break;
+                case 'quiz':
+                    // Content should be JSON string with quiz_id
+                    $quizData = is_string($blockData['content']) ? json_decode($blockData['content'], true) : $blockData['content'];
+                    $contentData['content_data'] = $quizData; // Don't double-encode, let the model cast handle it
+                    break;
+                default:
+                    $contentData['content_data'] = [
+                        'content' => $blockData['content']
+                    ];
+                    break;
+            }
+
+            // Update existing content or create new
+            if (!empty($blockData['id'])) {
+                // Update existing content
+                $existingContent = $lesson->contents()->find($blockData['id']);
+                if ($existingContent) {
+                    $existingContent->update($contentData);
+                    $existingContentIds[] = $blockData['id'];
+                }
+            } else {
+                // Create new content
+                $newContent = $lesson->contents()->create($contentData);
+                $existingContentIds[] = $newContent->id;
+            }
+        }
+
+        // Remove content blocks that are no longer present
+        $lesson->contents()->whereNotIn('id', $existingContentIds)->delete();
+
+        return redirect()
+            ->route('admin.courses.lessons.index', $course)
+            ->with('success', 'Lesson updated successfully!');
+    }
+
+    /**
+     * Update the specified lesson in storage (shallow route)
+     */
+    public function updateShallow(Request $request, Lesson $lesson): RedirectResponse
+    {
+        // Authorization handled by role:admin middleware
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'duration_minutes' => 'nullable|integer|min:0',
+            'order' => 'nullable|integer|min:1',
+            'is_published' => 'boolean',
+            'content_blocks' => 'required|array|min:1',
+            'content_blocks.*.type' => 'required|string|in:text,youtube,vimeo,h5p,code,runnable_code,matter_js,quiz',
+            'content_blocks.*.content' => 'required|string',
+            'content_blocks.*.order' => 'required|integer|min:1',
+            'content_blocks.*.id' => 'nullable|integer|exists:lesson_contents,id',
+        ]);
+
+        // Update lesson basic information
+        $lesson->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'duration_minutes' => $validated['duration_minutes'],
+            'order' => $validated['order'],
+            'is_published' => $validated['is_published'] ?? false,
+            'type' => 'text', // Set default type for multi-content lessons
+            'content' => 'Multi-content lesson - see content blocks',
+        ]);
+
+        // Handle content blocks (same logic as update method)
+        $existingContentIds = [];
+        
+        foreach ($validated['content_blocks'] as $index => $blockData) {
+            $contentData = [
+                'lesson_id' => $lesson->id,
+                'content_type' => $blockData['type'],
+                'order' => $blockData['order'],
+                'is_active' => true,
+            ];
+
+            // Handle different content types
+            switch ($blockData['type']) {
+                case 'youtube':
+                case 'vimeo':
+                    $contentData['content_data'] = [
+                        'url' => $blockData['content'],
+                        'video_type' => $blockData['type']
+                    ];
+                    break;
+                case 'text':
+                    $contentData['content_data'] = [
+                        'content' => $blockData['content']
+                    ];
+                    break;
+                case 'code':
+                case 'runnable_code':
+                    $contentData['content_data'] = [
+                        'code' => $blockData['content']
+                    ];
+                    break;
+                case 'matter_js':
+                    $contentData['content_data'] = [
+                        'matter_js_code' => $blockData['content']
+                    ];
+                    $contentData['matter_js_code'] = $blockData['content'];
+                    break;
+                case 'h5p':
+                    $contentData['content_data'] = [
+                        'h5p_id' => $blockData['content']
+                    ];
+                    $contentData['h5p_content_id'] = $blockData['content'];
+                    break;
+                case 'quiz':
+                    // Content should be JSON string with quiz_id
+                    $quizData = is_string($blockData['content']) ? json_decode($blockData['content'], true) : $blockData['content'];
+                    $contentData['content_data'] = $quizData; // Don't double-encode, let the model cast handle it
+                    break;
+                default:
+                    $contentData['content_data'] = [
+                        'content' => $blockData['content']
+                    ];
+                    break;
+            }
+
+            // Update existing content or create new
+            if (!empty($blockData['id'])) {
+                // Update existing content
+                $existingContent = $lesson->contents()->find($blockData['id']);
+                if ($existingContent) {
+                    $existingContent->update($contentData);
+                    $existingContentIds[] = $blockData['id'];
+                }
+            } else {
+                // Create new content
+                $newContent = $lesson->contents()->create($contentData);
+                $existingContentIds[] = $newContent->id;
+            }
+        }
+
+        // Remove content blocks that are no longer present
+        $lesson->contents()->whereNotIn('id', $existingContentIds)->delete();
+
+        $course = $lesson->course;
 
         return redirect()
             ->route('admin.courses.lessons.index', $course)
@@ -498,6 +705,99 @@ class LessonController extends Controller
     }
 
     /**
+     * Start a quiz attempt (AJAX)
+     */
+    public function startQuiz(Request $request, Course $course, Lesson $lesson, \App\Models\Quiz $quiz)
+    {
+        \Log::info('startQuiz called', [
+            'course_id' => $course->id,
+            'lesson_id' => $lesson->id,
+            'quiz_id' => $quiz->id,
+            'user_id' => auth()->id()
+        ]);
+        
+        $user = Auth::user();
+        
+        if (!$user || !$lesson->hasAccess($user)) {
+            \Log::warning('Access denied', ['user_id' => $user?->id, 'lesson_id' => $lesson->id]);
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        // Check if user can take this quiz
+        if (!$quiz->canUserTake($user)) {
+            \Log::warning('User cannot take quiz', ['user_id' => $user->id, 'quiz_id' => $quiz->id]);
+            return response()->json(['error' => 'You cannot take this quiz'], 403);
+        }
+
+        // Check if user has an active attempt
+        $activeAttempt = $quiz->getActiveAttempt($user);
+        if ($activeAttempt) {
+            \Log::info('Returning active attempt', ['attempt_id' => $activeAttempt->id]);
+            return response()->json([
+                'success' => true,
+                'attempt' => $activeAttempt,
+                'questions' => $quiz->getQuestionsForUser($user),
+                'time_remaining' => $activeAttempt->getRemainingTime(),
+            ]);
+        }
+
+        // Start new attempt
+        \Log::info('Starting new quiz attempt');
+        $attempt = $quiz->startAttempt($user);
+        
+        return response()->json([
+            'success' => true,
+            'attempt' => $attempt,
+            'questions' => $quiz->getQuestionsForUser($user),
+            'time_remaining' => $attempt->getRemainingTime(),
+        ]);
+    }
+
+    /**
+     * Save quiz answer (AJAX)
+     */
+    public function saveQuizAnswer(Request $request, Course $course, Lesson $lesson, \App\Models\Quiz $quiz)
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$lesson->hasAccess($user)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $validated = $request->validate([
+            'attempt_id' => 'required|exists:quiz_attempts,id',
+            'question_id' => 'required|exists:quiz_questions,id',
+            'answer' => 'required',
+        ]);
+
+        // Get the attempt
+        $attempt = \App\Models\QuizAttempt::where('id', $validated['attempt_id'])
+            ->where('user_id', $user->id)
+            ->where('quiz_id', $quiz->id)
+            ->where('status', 'in_progress')
+            ->first();
+
+        if (!$attempt) {
+            return response()->json(['error' => 'Invalid attempt'], 400);
+        }
+
+        // Check if attempt is expired
+        if ($attempt->isExpired()) {
+            $attempt->update(['status' => 'time_expired']);
+            return response()->json(['error' => 'Quiz time has expired'], 400);
+        }
+
+        // Save the answer
+        $attempt->updateAnswer($validated['question_id'], $validated['answer']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Answer saved',
+            'time_remaining' => $attempt->getRemainingTime(),
+        ]);
+    }
+
+    /**
      * Submit quiz answers (AJAX)
      */
     public function submitQuiz(Request $request, Course $course, Lesson $lesson, \App\Models\Quiz $quiz)
@@ -508,51 +808,76 @@ class LessonController extends Controller
             return response()->json(['error' => 'Access denied'], 403);
         }
 
-        $validated = $request->validate([
-            'answers' => 'required|array',
-            'time_spent' => 'nullable|integer|min:0',
-        ]);
-
-        // Create quiz attempt
-        $attempt = \App\Models\QuizAttempt::create([
-            'quiz_id' => $quiz->id,
-            'user_id' => $user->id,
-            'answers' => $validated['answers'],
-            'time_spent' => $validated['time_spent'] ?? 0,
-            'status' => 'completed',
-            'completed_at' => now(),
-        ]);
-
-        // Calculate score
-        $totalQuestions = $quiz->questions->where('is_active', true)->count();
-        $correctAnswers = 0;
-        $totalPoints = 0;
-        $earnedPoints = 0;
-
-        foreach ($quiz->questions->where('is_active', true) as $question) {
-            $userAnswer = $validated['answers'][$question->id] ?? null;
-            $points = $question->calculatePoints($userAnswer);
-            
-            $totalPoints += $question->points;
-            $earnedPoints += $points;
-            
-            if ($points > 0) {
-                $correctAnswers++;
-            }
+        // Check if user can take this quiz
+        if (!$quiz->canUserTake($user)) {
+            return response()->json(['error' => 'You cannot take this quiz'], 403);
         }
 
-        $scorePercentage = $totalPoints > 0 ? ($earnedPoints / $totalPoints) * 100 : 0;
-
-        // Update attempt with score
-        $attempt->update([
-            'score_percentage' => $scorePercentage,
-            'points_earned' => $earnedPoints,
-            'points_total' => $totalPoints,
+        $validated = $request->validate([
+            'answers' => 'required|array',
+            'attempt_id' => 'required|exists:quiz_attempts,id',
         ]);
 
-        // Update lesson progress if quiz passed
-        if ($scorePercentage >= ($quiz->passing_score ?? 70)) {
-            Progress::updateOrCreate(
+        // Get the attempt
+        $attempt = \App\Models\QuizAttempt::where('id', $validated['attempt_id'])
+            ->where('user_id', $user->id)
+            ->where('quiz_id', $quiz->id)
+            ->where('status', 'in_progress')
+            ->first();
+
+        if (!$attempt) {
+            return response()->json(['error' => 'Invalid attempt'], 400);
+        }
+
+        // Check if attempt is expired
+        if ($attempt->isExpired()) {
+            $attempt->update(['status' => 'time_expired']);
+            return response()->json(['error' => 'Quiz time has expired'], 400);
+        }
+
+        // Update attempt with answers
+        $attempt->update(['answers' => $validated['answers']]);
+
+        // Calculate score using Quiz model method
+        $results = $quiz->calculateScore($validated['answers']);
+
+        // Update attempt with results
+        $attempt->update([
+            'score' => $results['percentage'],
+            'points_earned' => $results['points_earned'],
+            'points_possible' => $results['points_possible'],
+            'is_passed' => $results['is_passed'],
+            'status' => 'completed',
+            'submitted_at' => now(),
+            'time_spent_seconds' => now()->diffInSeconds($attempt->started_at),
+            'detailed_results' => $results['question_results'],
+        ]);
+
+        // Create assessment result
+        \App\Models\AssessmentResult::create([
+            'user_id' => $user->id,
+            'assessable_type' => \App\Models\Quiz::class,
+            'assessable_id' => $quiz->id,
+            'assessment_type' => 'quiz',
+            'score' => $results['percentage'],
+            'max_score' => 100,
+            'is_passed' => $results['is_passed'],
+            'detailed_breakdown' => $results['question_results'],
+            'learning_analytics' => [
+                'time_spent' => $attempt->time_spent_seconds,
+                'attempt_number' => $attempt->attempt_number,
+                'quiz_settings' => [
+                    'time_limit' => $quiz->time_limit_minutes,
+                    'passing_score' => $quiz->passing_score,
+                    'randomized' => $quiz->randomize_questions,
+                ]
+            ],
+            'assessed_at' => now(),
+        ]);
+
+        // Update lesson progress if quiz passed and is required
+        if ($results['is_passed'] && $quiz->is_required) {
+            \App\Models\Progress::updateOrCreate(
                 [
                     'user_id' => $user->id,
                     'lesson_id' => $lesson->id,
@@ -567,12 +892,34 @@ class LessonController extends Controller
 
         return response()->json([
             'success' => true,
-            'attempt' => $attempt,
-            'score_percentage' => $scorePercentage,
-            'passed' => $scorePercentage >= ($quiz->passing_score ?? 70),
-            'correct_answers' => $correctAnswers,
-            'total_questions' => $totalQuestions,
+            'attempt' => $attempt->fresh(),
+            'results' => $results,
+            'show_correct_answers' => $quiz->show_correct_answers,
+            'can_retake' => $quiz->canUserTake($user),
+            'attempts_remaining' => max(0, $quiz->max_attempts - $attempt->attempt_number),
         ]);
+    }
+
+    /**
+     * Get available quizzes for lesson (AJAX)
+     */
+    public function getQuizzesForLesson(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $lessonId = $request->get('lesson_id');
+        $courseId = $request->get('course_id');
+        
+        $query = \App\Models\Quiz::where('is_active', true);
+        
+        if ($courseId) {
+            // Get all quizzes for the course (both lesson-specific and course-level)
+            $query->where('course_id', $courseId);
+        }
+        
+        $quizzes = $query->select('id', 'title', 'description', 'quiz_type')
+                        ->orderBy('title')
+                        ->get();
+
+        return response()->json(['quizzes' => $quizzes]);
     }
 
     /**

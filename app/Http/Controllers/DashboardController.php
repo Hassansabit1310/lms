@@ -56,6 +56,8 @@ class DashboardController extends Controller
             'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
             'total_h5p_content' => H5PContent::count(),
             'total_lessons' => Lesson::count(),
+            'total_quizzes' => \App\Models\Quiz::count(),
+            'total_quiz_attempts' => \App\Models\QuizAttempt::count(),
             'new_users_this_month' => User::whereMonth('created_at', now()->month)->count(),
             'new_enrollments_this_month' => Enrollment::whereMonth('created_at', now()->month)->count(),
         ];

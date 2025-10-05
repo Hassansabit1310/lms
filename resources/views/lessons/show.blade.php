@@ -1,6 +1,11 @@
 <x-app-layout>
+    <!-- Meta tags for quiz functionality -->
+    <meta name="course-id" content="{{ $course->id }}">
+    <meta name="lesson-id" content="{{ $lesson->id }}">
+    
     @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/quiz-styles.css') }}">
     <style>
         .video-responsive {
             position: relative;
@@ -398,6 +403,7 @@
 
     @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+    <script src="{{ asset('js/quiz-player.js') }}"></script>
     <script>
         // Matter.js Physics Simulation (placeholder)
         let engine, render, runner;
@@ -463,6 +469,17 @@
             
             // Initialize runnable code functionality
             initRunnableCode();
+            
+            // Initialize Quiz Player
+            const courseId = document.querySelector('meta[name="course-id"]')?.getAttribute('content');
+            const lessonId = document.querySelector('meta[name="lesson-id"]')?.getAttribute('content');
+            
+            if (courseId && lessonId) {
+                window.quizPlayer = new QuizPlayer({
+                    courseId: courseId,
+                    lessonId: lessonId
+                });
+            }
         });
         
         // Runnable Code functionality

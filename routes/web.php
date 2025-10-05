@@ -175,7 +175,163 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Quiz functionality within lessons
     Route::get('/courses/{course}/lessons/{lesson}/quiz/{quiz}', [LessonController::class, 'showQuiz'])->name('lessons.quiz.show');
-    Route::post('/courses/{course}/lessons/{lesson}/quiz/{quiz}/submit', [LessonController::class, 'submitQuiz'])->name('lessons.quiz.submit');
+    Route::post('/courses/{course}/lessons/{lesson}/quiz/{quiz}/start', function($courseId, $lessonId, $quizId) {
+        try {
+            $course = \App\Models\Course::findOrFail($courseId);
+            $lesson = \App\Models\Lesson::findOrFail($lessonId);
+            $quiz = \App\Models\Quiz::findOrFail($quizId);
+            $user = auth()->user();
+            
+            if (!$user || !$lesson->hasAccess($user)) {
+                return response()->json(['error' => 'Access denied'], 403);
+            }
+
+            if (!$quiz->canUserTake($user)) {
+                return response()->json(['error' => 'You cannot take this quiz'], 403);
+            }
+
+            // Check if user has an active attempt
+            $activeAttempt = $quiz->getActiveAttempt($user);
+            if ($activeAttempt) {
+                return response()->json([
+                    'success' => true,
+                    'attempt' => $activeAttempt,
+                    'questions' => $quiz->getQuestionsForUser($user),
+                    'time_remaining' => $activeAttempt->getRemainingTime(),
+                ]);
+            }
+
+            // Start new attempt
+            $attempt = $quiz->startAttempt($user);
+            
+            return response()->json([
+                'success' => true,
+                'attempt' => $attempt,
+                'questions' => $quiz->getQuestionsForUser($user),
+                'time_remaining' => $attempt->getRemainingTime(),
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Quiz start error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to start quiz: ' . $e->getMessage()], 500);
+        }
+    })->name('lessons.quiz.start');
+    // Save quiz answer route
+    Route::post('/courses/{course}/lessons/{lesson}/quiz/{quiz}/save-answer', function($courseId, $lessonId, $quizId) {
+        try {
+            $course = \App\Models\Course::findOrFail($courseId);
+            $lesson = \App\Models\Lesson::findOrFail($lessonId);
+            $quiz = \App\Models\Quiz::findOrFail($quizId);
+            $user = auth()->user();
+            
+            if (!$user || !$lesson->hasAccess($user)) {
+                return response()->json(['error' => 'Access denied'], 403);
+            }
+
+            $request = request();
+            $validated = $request->validate([
+                'question_id' => 'required|exists:quiz_questions,id',
+                'answer' => 'required',
+                'attempt_id' => 'required|exists:quiz_attempts,id'
+            ]);
+
+            // Get the attempt and verify it belongs to the user
+            $attempt = \App\Models\QuizAttempt::where('id', $validated['attempt_id'])
+                ->where('user_id', $user->id)
+                ->where('quiz_id', $quizId)
+                ->where('status', 'in_progress')
+                ->firstOrFail();
+
+            // Save or update the answer using QuizAttempt's updateAnswer method
+            $attempt->updateAnswer($validated['question_id'], $validated['answer']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Answer saved successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Quiz save answer error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to save answer: ' . $e->getMessage()], 500);
+        }
+    })->name('lessons.quiz.save-answer');
+
+    // Submit quiz route
+    Route::post('/courses/{course}/lessons/{lesson}/quiz/{quiz}/submit', function($courseId, $lessonId, $quizId) {
+        try {
+            $course = \App\Models\Course::findOrFail($courseId);
+            $lesson = \App\Models\Lesson::findOrFail($lessonId);
+            $quiz = \App\Models\Quiz::findOrFail($quizId);
+            $user = auth()->user();
+            
+            if (!$user || !$lesson->hasAccess($user)) {
+                return response()->json(['error' => 'Access denied'], 403);
+            }
+
+            $request = request();
+            $validated = $request->validate([
+                'attempt_id' => 'required|exists:quiz_attempts,id',
+                'answers' => 'required|array'
+            ]);
+
+            // Get the attempt and verify it belongs to the user
+            $attempt = \App\Models\QuizAttempt::where('id', $validated['attempt_id'])
+                ->where('user_id', $user->id)
+                ->where('quiz_id', $quizId)
+                ->first();
+                
+            if (!$attempt) {
+                return response()->json(['error' => 'Quiz attempt not found. Please start the quiz again.'], 404);
+            }
+            
+            if ($attempt->status !== 'in_progress') {
+                return response()->json(['error' => 'Quiz attempt is not in progress. Status: ' . $attempt->status], 400);
+            }
+
+            // Update answers if provided
+            if (!empty($validated['answers'])) {
+                $currentAnswers = $attempt->answers ?? [];
+                foreach ($validated['answers'] as $questionId => $answer) {
+                    $currentAnswers[$questionId] = $answer;
+                }
+                $attempt->update(['answers' => $currentAnswers]);
+            }
+            
+            // Submit the quiz (this will calculate score and update the attempt)
+            $attempt->submit();
+
+            // Refresh the attempt to get updated data
+            $attempt->refresh();
+
+            // Update lesson progress
+            $progress = \App\Models\LessonProgress::firstOrCreate([
+                'user_id' => $user->id,
+                'lesson_id' => $lessonId
+            ]);
+
+            if (!$progress->completed_at) {
+                $progress->update([
+                    'completed_at' => now(),
+                    'progress_percentage' => 100
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'results' => [
+                    'score' => $attempt->points_earned,
+                    'total_points' => $attempt->points_possible,
+                    'percentage' => $attempt->score,
+                    'passed' => $attempt->is_passed,
+                    'questions' => $attempt->detailed_results ?? []
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Quiz submit error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to submit quiz: ' . $e->getMessage()], 500);
+        }
+    })->name('lessons.quiz.submit');
     
     // Payment routes
     Route::get('/courses/{course}/checkout', [PaymentController::class, 'checkout'])->name('courses.checkout');
@@ -231,6 +387,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     
     Route::resource('courses.lessons', LessonController::class)->except(['index', 'show', 'create'])->shallow();
     
+    // Override the shallow routes to use the correct methods
+    Route::get('/lessons/{lesson}/edit', [LessonController::class, 'editShallow'])->name('lessons.edit');
+    Route::patch('/lessons/{lesson}', [LessonController::class, 'updateShallow'])->name('lessons.update');
+    
     // Add missing nested lesson routes
     Route::get('/courses/{course}/lessons/{lesson}/edit', [LessonController::class, 'edit'])->name('courses.lessons.edit');
     Route::patch('/courses/{course}/lessons/{lesson}', [LessonController::class, 'update'])->name('courses.lessons.update');
@@ -254,6 +414,20 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('/h5p/{h5pContent}', [H5PController::class, 'destroy'])->name('h5p.destroy');
     Route::get('/h5p/available', [H5PController::class, 'getAvailableContent'])->name('h5p.available');
     Route::post('/h5p/{h5pContent}/retry', [H5PController::class, 'retryProcessing'])->name('h5p.retry');
+    
+    // Quiz Management
+    Route::resource('quizzes', \App\Http\Controllers\Admin\QuizController::class);
+    Route::get('/quizzes/{quiz}/duplicate', [\App\Http\Controllers\Admin\QuizController::class, 'duplicate'])->name('quizzes.duplicate');
+    Route::post('/quizzes/{quiz}/toggle-active', [\App\Http\Controllers\Admin\QuizController::class, 'toggleActive'])->name('quizzes.toggle-active');
+    Route::get('/quizzes/{quiz}/statistics', [\App\Http\Controllers\Admin\QuizController::class, 'getStatistics'])->name('quizzes.statistics');
+    Route::get('/quizzes/{quiz}/export-results', [\App\Http\Controllers\Admin\QuizController::class, 'exportResults'])->name('quizzes.export-results');
+    Route::get('/quizzes/{quiz}/preview', [\App\Http\Controllers\Admin\QuizController::class, 'preview'])->name('quizzes.preview');
+    Route::post('/quizzes/{quiz}/assign-lesson', [\App\Http\Controllers\Admin\QuizController::class, 'assignToLesson'])->name('quizzes.assign-lesson');
+    Route::post('/quizzes/{quiz}/assign-course', [\App\Http\Controllers\Admin\QuizController::class, 'assignToCourse'])->name('quizzes.assign-course');
+    
+    // API routes for AJAX calls
+    Route::get('/api/lessons-for-course', [\App\Http\Controllers\Admin\QuizController::class, 'getLessonsForCourse'])->name('api.lessons-for-course');
+    Route::get('/api/quizzes-for-lesson', [\App\Http\Controllers\LessonController::class, 'getQuizzesForLesson'])->name('api.quizzes-for-lesson');
     
     Route::post('/lessons/reorder', [LessonController::class, 'reorder'])->name('lessons.reorder');
     Route::get('/h5p/available-for-lessons', [LessonController::class, 'getAvailableH5P'])->name('admin.h5p.available');

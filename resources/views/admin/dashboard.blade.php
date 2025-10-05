@@ -126,6 +126,22 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Total Quizzes -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">Total Quizzes</p>
+                            <p class="text-3xl font-bold text-slate-800">{{ number_format($stats['total_quizzes'] ?? 0) }}</p>
+                            <p class="text-sm text-orange-600">{{ number_format($stats['total_quiz_attempts'] ?? 0) }} attempts</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Management Panels -->
@@ -177,11 +193,20 @@
                             <span class="font-medium text-pink-700">H5P Content Library</span>
                         </a>
 
-                        <a href="{{ route('admin.h5p.create') }}" class="flex items-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+                        <a href="{{ route('admin.quizzes.index') }}" class="flex items-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
                             <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <span class="font-medium text-orange-700">Quiz Management</span>
+                        </a>
+
+                        <a href="{{ route('admin.h5p.create') }}" class="flex items-center p-3 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors">
+                            <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center mr-3">
                                 <i class="fas fa-upload text-white text-sm"></i>
                             </div>
-                            <span class="font-medium text-orange-700">Upload H5P Content</span>
+                            <span class="font-medium text-teal-700">Upload H5P Content</span>
                         </a>
 
                         <a href="{{ route('admin.bundles.index') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">

@@ -80,6 +80,87 @@ class LessonContent extends Model
     }
 
     /**
+     * Accessor for 'type' attribute (maps to content_type)
+     */
+    public function getTypeAttribute()
+    {
+        return $this->content_type;
+    }
+
+    /**
+     * Mutator for 'type' attribute (maps to content_type)
+     */
+    public function setTypeAttribute($value)
+    {
+        $this->attributes['content_type'] = $value;
+    }
+
+    /**
+     * Accessor for 'content' attribute (maps to content_data)
+     */
+    public function getContentAttribute()
+    {
+        // If content_data is an array, extract the main content
+        if (is_array($this->content_data)) {
+            // For different content types, extract the appropriate field
+            switch ($this->content_type) {
+                case 'youtube':
+                case 'vimeo':
+                    return $this->content_data['url'] ?? '';
+                case 'text':
+                    return $this->content_data['content'] ?? '';
+                case 'code':
+                case 'runnable_code':
+                case 'matter_js':
+                    return $this->content_data['code'] ?? $this->content_data['matter_js_code'] ?? '';
+                case 'h5p':
+                    return $this->content_data['h5p_id'] ?? '';
+                case 'quiz':
+                    return json_encode($this->content_data);
+                default:
+                    return $this->content_data['content'] ?? json_encode($this->content_data);
+            }
+        }
+        return $this->content_data ?? '';
+    }
+
+    /**
+     * Mutator for 'content' attribute (maps to content_data)
+     */
+    public function setContentAttribute($value)
+    {
+        // Store content in the appropriate format based on content type
+        $contentType = $this->content_type ?? $this->attributes['content_type'] ?? 'text';
+        
+        switch ($contentType) {
+            case 'youtube':
+            case 'vimeo':
+                $this->attributes['content_data'] = json_encode(['url' => $value, 'video_type' => $contentType]);
+                break;
+            case 'text':
+                $this->attributes['content_data'] = json_encode(['content' => $value]);
+                break;
+            case 'code':
+            case 'runnable_code':
+                $this->attributes['content_data'] = json_encode(['code' => $value]);
+                break;
+            case 'matter_js':
+                $this->attributes['content_data'] = json_encode(['matter_js_code' => $value]);
+                break;
+            case 'h5p':
+                $this->attributes['content_data'] = json_encode(['h5p_id' => $value]);
+                break;
+            case 'quiz':
+                // If it's already JSON, keep it as is, otherwise wrap it
+                $this->attributes['content_data'] = is_string($value) && json_decode($value) ? $value : json_encode(['content' => $value]);
+                break;
+            default:
+                $this->attributes['content_data'] = json_encode(['content' => $value]);
+                break;
+        }
+    }
+
+    /**
      * Get rendered content based on type
      */
     public function getRenderedContentAttribute(): string
@@ -668,9 +749,121 @@ class LessonContent extends Model
      */
     private function renderQuizContent(): string
     {
-        return '<div class="quiz-container" data-quiz-id="' . ($this->content_data['quiz_id'] ?? '') . '">
-                    <p>Quiz: ' . ($this->content_data['title'] ?? 'Untitled Quiz') . '</p>
-                </div>';
+        $quizId = $this->content_data['quiz_id'] ?? null;
+        
+        if (!$quizId) {
+            return '<div class="alert alert-warning">Quiz not configured properly.</div>';
+        }
+
+        // Get quiz details
+        $quiz = \App\Models\Quiz::with(['questions'])->find($quizId);
+        // dd($quiz);
+        
+        if (!$quiz || !$quiz->is_active) {
+            return '<div class="alert alert-info">This quiz is not available.</div>';
+        }
+
+        $user = auth()->user();
+        $canTake = $user ? $quiz->canUserTake($user) : false;
+        $bestAttempt = $user ? $quiz->getBestAttempt($user) : null;
+        $attemptsCount = $user ? $quiz->attempts()->where('user_id', $user->id)->count() : 0;
+        $attemptsRemaining = max(0, $quiz->max_attempts - $attemptsCount);
+
+        $html = '<div class="quiz-content-block" data-quiz-id="' . $quiz->id . '">';
+        $html .= '<div class="quiz-header bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6 mb-4">';
+        $html .= '<h3 class="text-xl font-bold text-purple-900 mb-2">' . htmlspecialchars($quiz->title) . '</h3>';
+        
+        if ($quiz->description) {
+            $html .= '<p class="text-purple-700 mb-4">' . nl2br(htmlspecialchars($quiz->description)) . '</p>';
+        }
+
+        // Quiz info
+        $html .= '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">';
+        $html .= '<div class="flex items-center text-purple-600">';
+        $html .= '<i class="fas fa-question-circle mr-2"></i>';
+        $html .= '<span>' . $quiz->questions->count() . ' Questions</span>';
+        $html .= '</div>';
+        
+        if ($quiz->time_limit_minutes) {
+            $html .= '<div class="flex items-center text-purple-600">';
+            $html .= '<i class="fas fa-clock mr-2"></i>';
+            $html .= '<span>' . $quiz->time_limit_minutes . ' Minutes</span>';
+            $html .= '</div>';
+        }
+        
+        $html .= '<div class="flex items-center text-purple-600">';
+        $html .= '<i class="fas fa-trophy mr-2"></i>';
+        $html .= '<span>Pass: ' . $quiz->passing_score . '%</span>';
+        $html .= '</div>';
+        $html .= '</div>';
+
+        // Attempts info
+        if ($user) {
+            $html .= '<div class="mt-4 pt-4 border-t border-purple-200">';
+            
+            if ($bestAttempt) {
+                $html .= '<div class="flex items-center justify-between">';
+                $html .= '<span class="text-sm text-purple-600">Best Score: ' . number_format($bestAttempt->score, 1) . '%</span>';
+                $html .= '<span class="text-sm text-purple-600">Attempts: ' . $attemptsCount . '/' . $quiz->max_attempts . '</span>';
+                $html .= '</div>';
+            } else {
+                $html .= '<span class="text-sm text-purple-600">Attempts remaining: ' . $attemptsRemaining . '</span>';
+            }
+            $html .= '</div>';
+        }
+
+        $html .= '</div>'; // End quiz-header
+
+        // Quiz action area
+        $html .= '<div class="quiz-action-area">';
+        
+        if (!$user) {
+            $html .= '<div class="alert alert-info">';
+            $html .= '<i class="fas fa-info-circle mr-2"></i>';
+            $html .= 'Please log in to take this quiz.';
+            $html .= '</div>';
+        } elseif (!$canTake) {
+            if ($attemptsRemaining <= 0) {
+                $html .= '<div class="alert alert-warning">';
+                $html .= '<i class="fas fa-exclamation-triangle mr-2"></i>';
+                $html .= 'You have used all your attempts for this quiz.';
+                $html .= '</div>';
+            } else {
+                $html .= '<div class="alert alert-warning">';
+                $html .= '<i class="fas fa-lock mr-2"></i>';
+                $html .= 'This quiz is currently locked. Complete previous requirements to unlock.';
+                $html .= '</div>';
+            }
+        } else {
+            // User can take the quiz
+            $html .= '<div class="quiz-start-area text-center">';
+            $html .= '<button type="button" class="btn btn-primary btn-lg start-quiz-btn" data-quiz-id="' . $quiz->id . '">';
+            $html .= '<i class="fas fa-play mr-2"></i>';
+            $html .= ($attemptsCount > 0 ? 'Retake Quiz' : 'Start Quiz');
+            $html .= '</button>';
+            $html .= '</div>';
+        }
+
+        // Quiz results (if any)
+        if ($bestAttempt) {
+            $html .= '<div class="quiz-results mt-4 p-4 bg-gray-50 rounded-lg">';
+            $html .= '<h4 class="font-semibold mb-2">Your Best Result:</h4>';
+            $html .= '<div class="flex items-center justify-between">';
+            $html .= '<span>Score: ' . number_format($bestAttempt->score, 1) . '%</span>';
+            $html .= '<span class="badge ' . ($bestAttempt->is_passed ? 'badge-success' : 'badge-danger') . '">';
+            $html .= $bestAttempt->is_passed ? 'Passed' : 'Failed';
+            $html .= '</span>';
+            $html .= '</div>';
+            $html .= '<div class="text-sm text-gray-600 mt-2">';
+            $html .= 'Completed: ' . $bestAttempt->submitted_at->format('M j, Y g:i A');
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+
+        $html .= '</div>'; // End quiz-action-area
+        $html .= '</div>'; // End quiz-content-block
+
+        return $html;
     }
 
     /**

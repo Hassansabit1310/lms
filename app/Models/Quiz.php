@@ -212,7 +212,7 @@ class Quiz extends Model
      */
     public function getQuestionsForUser(User $user): \Illuminate\Database\Eloquent\Collection
     {
-        $questions = $this->questions()->active()->get();
+        $questions = $this->questions()->where('is_active', true)->get();
 
         if ($this->randomize_questions) {
             return $questions->shuffle();
@@ -226,7 +226,7 @@ class Quiz extends Model
      */
     public function calculateScore(array $answers): array
     {
-        $questions = $this->questions()->active()->get();
+        $questions = $this->questions()->where('is_active', true)->get();
         $totalPoints = 0;
         $earnedPoints = 0;
         $results = [];
