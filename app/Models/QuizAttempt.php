@@ -72,6 +72,8 @@ class QuizAttempt extends Model
             'detailed_results' => $results['question_results'],
         ]);
 
+        // Temporarily comment out AssessmentResult creation to test
+        /*
         // Create assessment result
         AssessmentResult::create([
             'user_id' => $this->user_id,
@@ -88,6 +90,7 @@ class QuizAttempt extends Model
             ],
             'assessed_at' => now(),
         ]);
+        */
     }
 
     /**

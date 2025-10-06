@@ -342,8 +342,27 @@ class QuizPlayer {
         const quizContainer = document.querySelector(`[data-quiz-id="${this.quizId}"]`);
         if (!quizContainer) return;
         
-        const results = data.results;
-        const attempt = data.attempt;
+        // Handle both regular submission and "already submitted" responses
+        let results, attempt;
+        if (data.results) {
+            // Regular submission response
+            results = data.results;
+            attempt = data.attempt;
+        } else if (data.already_submitted) {
+            // Already submitted response - construct results from attempt data
+            attempt = data.attempt;
+            results = {
+                percentage: parseFloat(data.score || attempt.score || 0),
+                points_earned: parseFloat(data.attempt?.points_earned || 0),
+                points_possible: parseFloat(data.attempt?.points_possible || 1),
+                is_passed: data.is_passed || attempt.is_passed || false,
+                question_results: attempt.detailed_results || []
+            };
+        } else {
+            console.error('Invalid response format:', data);
+            this.showError('Invalid response from server');
+            return;
+        }
         
         let html = `
             <div class="quiz-results">

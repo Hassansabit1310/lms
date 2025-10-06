@@ -285,6 +285,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
             
             if ($attempt->status !== 'in_progress') {
+                // If already completed, return the existing results instead of error
+                if ($attempt->status === 'completed') {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Quiz already submitted',
+                        'attempt' => $attempt,
+                        'results' => [
+                            'points_earned' => $attempt->points_earned,
+                            'points_possible' => $attempt->points_possible,
+                            'percentage' => $attempt->score,
+                            'is_passed' => $attempt->is_passed,
+                            'question_results' => $attempt->detailed_results ?? []
+                        ],
+                        'show_correct_answers' => true,
+                        'can_retake' => $attempt->quiz->max_attempts > $attempt->quiz->attempts()->where('user_id', $user->id)->count(),
+                        'attempts_remaining' => max(0, $attempt->quiz->max_attempts - $attempt->quiz->attempts()->where('user_id', $user->id)->count()),
+                        'already_submitted' => true
+                    ]);
+                }
+                
                 return response()->json(['error' => 'Quiz attempt is not in progress. Status: ' . $attempt->status], 400);
             }
 
@@ -304,7 +324,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $attempt->refresh();
 
             // Update lesson progress
-            $progress = \App\Models\LessonProgress::firstOrCreate([
+            $progress = \App\Models\Progress::firstOrCreate([
                 'user_id' => $user->id,
                 'lesson_id' => $lessonId
             ]);
@@ -318,13 +338,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             return response()->json([
                 'success' => true,
+                'attempt' => $attempt,
                 'results' => [
-                    'score' => $attempt->points_earned,
-                    'total_points' => $attempt->points_possible,
+                    'points_earned' => $attempt->points_earned,
+                    'points_possible' => $attempt->points_possible,
                     'percentage' => $attempt->score,
-                    'passed' => $attempt->is_passed,
-                    'questions' => $attempt->detailed_results ?? []
-                ]
+                    'is_passed' => $attempt->is_passed,
+                    'question_results' => $attempt->detailed_results ?? []
+                ],
+                'show_correct_answers' => true, // You can make this configurable
+                'can_retake' => $attempt->quiz->max_attempts > $attempt->quiz->attempts()->where('user_id', $user->id)->count(),
+                'attempts_remaining' => max(0, $attempt->quiz->max_attempts - $attempt->quiz->attempts()->where('user_id', $user->id)->count())
             ]);
             
         } catch (\Exception $e) {
